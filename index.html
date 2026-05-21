@@ -1,44 +1,67 @@
-    convertBtn.addEventListener('click', () => {
-        if (!loadedSvgContent) return;
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SVG to AM XML - Resplace</title>
+    <style>
+        body { font-family: sans-serif; background: #0f0f13; color: #fff; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .box { background: #1a1a24; padding: 30px; border-radius: 15px; text-align: center; width: 350px; border: 1px solid #2a2a3a; }
+        .drop-zone { border: 2px dashed #ff4a4a; padding: 30px; margin: 20px 0; cursor: pointer; border-radius: 10px; }
+        button { background: #ff4a4a; color: #fff; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; width: 100%; display: none; }
+        #status { margin-top: 10px; font-size: 13px; color: #888; }
+    </style>
+</head>
+<body>
 
-        const pathRegex = /d="([^"]+)"/g;
-        let matches;
-        let shapeLayers = "";
-        let idCounter = 2000;
+<div class="box">
+    <h3>SVG to Alight Motion</h3>
+    <div class="drop-zone" id="dropZone">Klik / Upload SVG</div>
+    <input type="file" id="fileInput" style="display:none" accept=".svg">
+    <button id="btn">DOWNLOAD XML</button>
+    <div id="status"></div>
+</div>
 
-        const fillRegex = /fill="([^"]+)"/;
-        let fillMatch = loadedSvgContent.match(fillRegex);
-        let hexColor = fillMatch ? fillMatch[1].replace("#", "") : "d00f0f";
-        if (hexColor.length === 6) hexColor = "ff" + hexColor;
+<script>
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const btn = document.getElementById('btn');
+    const status = document.getElementById('status');
+    let svgData = "";
+    let fname = "Preset";
 
-        while ((matches = pathRegex.exec(loadedSvgContent)) !== null) {
-            const pathData = matches[1];
-            shapeLayers += `  <shape id="${idCounter}" label="Shape_${String(idCounter - 1999).padStart(3, '0')}" startTime="0" endTime="2032" fillType="color" mediaFillMode="fill">
-    <transform>
-      <location value="0.000000,0.000000,0.000000" />
-    </transform>
-    <fillColor value="#${hexColor}" />
-    <path d="${pathData}" />
-  </shape>\n`;
-            idCounter++;
+    dropZone.onclick = () => fileInput.click();
+    fileInput.onchange = (e) => {
+        const file = e.target.files[0];
+        if(file) {
+            fname = file.name.replace('.svg', '');
+            const reader = new FileReader();
+            reader.onload = (res) => {
+                svgData = res.target.result;
+                btn.style.display = 'block';
+                status.innerText = "File Siap!";
+            };
+            reader.readAsText(file);
         }
+    };
 
-        // PERBAIKAN: Header XML dibuat sangat standar agar terbaca AM
-        const amXml = `<?xml version='1.0' encoding='UTF-8' ?>
-<scene title="${loadedFileName}" width="1080" height="1080" exportWidth="1080" exportHeight="1080" precompose="dynamicResolution" bgcolor="#ff000000" totalTime="2000" fps="30" amver="1028417" ffver="106" am="com.alightcreative.motion/5.0" amplatform="android">
-${shapeLayers}</scene>`;
+    btn.onclick = () => {
+        const pathMatch = [...svgData.matchAll(/d="([^"]+)"/g)];
+        let shapes = "";
+        pathMatch.forEach((m, i) => {
+            shapes += `<shape id="${2000+i}" label="Layer_${i}" startTime="0" endTime="2000" fillType="color"><transform><location value="540,540,0"/></transform><fillColor value="#ffff4a4a"/><path d="${m[1]}"/></shape>`;
+        });
 
-        const blob = new Blob([amXml.trim()], { type: "text/xml" }); // Tambahkan .trim() untuk hapus spasi kosong
+        const xml = `<?xml version='1.0' encoding='UTF-8' ?><scene title="${fname}" width="1080" height="1080" exportWidth="1080" exportHeight="1080" amver="1028417" ffver="106" am="com.alightcreative.motion/5.0" amplatform="android">${shapes}</scene>`;
+        
+        const blob = new Blob([xml.trim()], {type: 'text/xml'});
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `${loadedFileName}.xml`;
-        document.body.appendChild(a);
+        a.download = fname + ".xml";
         a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        
-        status.innerText = "Berhasil! Coba import file ini ke AM.";
-        status.style.color = '#4aff4a';
-    });
-        
+        status.innerText = "Berhasil diunduh!";
+    };
+</script>
+</body>
+</html>
