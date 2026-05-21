@@ -1,0 +1,1719 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>
+      SVG → Alight Motion XML converter
+    </title>
+    <style>
+      @import url(&#39;https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&amp;family=Syne:wght@400;600;700;800&amp;display=swap&#39;);
+
+  /* ── DARK MODE (default) ── */
+  :root {
+    --bg: #0d1b2a;
+    --surface: #112235;
+    --surface2: #173048;
+    --border: #1e3a52;
+    --accent: #38bdf8;
+    --accent2: #6366f1;
+    --green: #34d399;
+    --red: #f87171;
+    --text: #e2eaf4;
+    --muted: #6b90ad;
+    --yellow: #fcd34d;
+    --teal: #22d3ee;
+    --feature-bg: rgba(56,189,248,0.07);
+    --feature-border: rgba(56,189,248,0.22);
+    --feature-text: #a8d8f0;
+    --shadow: 0 2px 16px rgba(0,0,0,0.35);
+  }
+
+  /* ── LIGHT MODE ── */
+  body.light {
+    --bg: #dff0fb;
+    --surface: #c8e6f7;
+    --surface2: #b3d9f2;
+    --border: #85bfe0;
+    --accent: #0277bd;
+    --accent2: #4f46e5;
+    --green: #047857;
+    --red: #b91c1c;
+    --text: #0d2a3a;
+    --muted: #3a6478;
+    --yellow: #92400e;
+    --teal: #0e7490;
+    --feature-bg: rgba(2,119,189,0.08);
+    --feature-border: rgba(2,119,189,0.28);
+    --feature-text: #0c4a6e;
+    --shadow: 0 2px 16px rgba(0,80,140,0.13);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: &#39;Space Mono&#39;, monospace;
+    font-weight: 400;
+    min-height: 100vh;
+    overflow-x: hidden;
+    transition: background 0.3s, color 0.3s;
+  }
+
+  body::before {
+    content: &#39;&#39;;
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(56,189,248,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(56,189,248,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── THEME TOGGLE BUTTON ── */
+  .theme-toggle {
+    position: fixed;
+    top: 14px;
+    right: 14px;
+    z-index: 100;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 30px;
+    padding: 7px 16px;
+    color: var(--text);
+    font-family: &#39;Syne&#39;, sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    box-shadow: var(--shadow);
+    transition: background 0.2s, border-color 0.2s, color 0.2s;
+    white-space: nowrap;
+  }
+  .theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
+  .theme-toggle .toggle-icon { font-size: 15px; }
+
+  /* ── LAYOUT ── */
+  .container { position: relative; z-index: 1; max-width: 700px; margin: 0 auto; padding: 24px 16px 60px; }
+
+  /* ── HEADER ── */
+  .header { text-align: center; padding: 42px 0 28px; }
+  .logo-icon {
+    width: 48px; height: 48px;
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    border-radius: 14px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-family: &#39;Syne&#39;, sans-serif; font-weight: 800; font-size: 15px;
+    color: #fff; margin-bottom: 14px;
+    box-shadow: 0 4px 18px rgba(56,189,248,0.25);
+  }
+  h1 {
+    font-family: &#39;Syne&#39;, sans-serif;
+    font-size: clamp(22px, 5.5vw, 34px);
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    background: linear-gradient(90deg, var(--text) 0%, var(--accent) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .subtitle {
+    font-size: clamp(10px, 2.5vw, 12px);
+    color: var(--muted);
+    font-weight: 400;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-top: 6px;
+  }
+
+  /* ── FEATURE INFO BOX ── */
+  .feature-info {
+    background: var(--feature-bg);
+    border: 1px solid var(--feature-border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 16px;
+    font-size: clamp(11px, 3vw, 13px);
+    color: var(--feature-text);
+    line-height: 1.65;
+    font-weight: 400;
+  }
+  .feature-info strong {
+    font-weight: 700;
+    color: var(--accent);
+    display: block;
+    margin-bottom: 5px;
+    font-size: clamp(11px, 3vw, 13px);
+    letter-spacing: 0.5px;
+  }
+  .feature-info ul {
+    padding-left: 16px;
+    margin: 0;
+  }
+  .feature-info ul li {
+    margin-bottom: 3px;
+    font-size: clamp(11px, 3vw, 13px);
+  }
+
+  /* ── STATS ── */
+  .stats { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; margin-bottom: 20px; }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 13px 10px;
+    box-shadow: var(--shadow);
+  }
+  .stat-label {
+    font-size: clamp(10px, 2.5vw, 11px);
+    color: var(--muted);
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .stat-val { font-size: 20px; font-weight: 700; color: var(--accent); font-family: &#39;Syne&#39;, sans-serif; }
+
+  /* ── SECTIONS ── */
+  .section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+  }
+  .section-title {
+    font-size: clamp(11px, 2.8vw, 13px);
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  /* ── FIELDS ── */
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  label {
+    font-size: clamp(10px, 2.5vw, 11px);
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+  input[type=number], input[type=text], input[type=color], select {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: var(--accent);
+    font-family: &#39;Space Mono&#39;, monospace;
+    font-size: clamp(12px, 3vw, 14px);
+    font-weight: 400;
+    outline: none;
+    width: 100%;
+    transition: border-color 0.2s;
+  }
+  input[type=number]:focus, input[type=text]:focus, select:focus { border-color: var(--accent); }
+  input[type=color] { height: 38px; padding: 4px 8px; cursor: pointer; }
+  input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0; }
+
+  /* ── DROPZONE ── */
+  .dropzone {
+    border: 2px dashed var(--border);
+    border-radius: 12px;
+    padding: 32px 20px;
+    text-align: center;
+    cursor: pointer;
+    position: relative;
+    transition: border-color .2s;
+  }
+  .dropzone:hover { border-color: var(--accent); }
+
+  /* ── PREVIEW ── */
+  .preview-box { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; margin-top: 14px; overflow: hidden; }
+  .preview-canvas {
+    width: 100%; height: 220px;
+    display: flex; align-items: center; justify-content: center;
+    background: repeating-conic-gradient(rgba(0,0,0,0.06) 0% 25%, transparent 0% 50%) 0 0 / 20px 20px;
+    position: relative; overflow: hidden; cursor: grab;
+  }
+  .preview-canvas.dragging { cursor: grabbing; }
+  #svgViewport { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; transform-origin: center center; }
+  #svgViewport svg { max-width: 100%; max-height: 100%; }
+  #previewPlaceholder {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    color: var(--muted); font-size: clamp(11px, 3vw, 13px);
+  }
+  .pv-bar {
+    display: none; justify-content: space-between; align-items: center;
+    padding: 6px 12px; background: var(--surface2);
+    border-top: 1px solid var(--border);
+    font-size: clamp(10px, 2.5vw, 12px); color: var(--muted);
+  }
+  .pv-bar button {
+    background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+    color: var(--text); font-size: clamp(10px, 2.5vw, 12px); padding: 3px 10px;
+    cursor: pointer; font-family: &#39;Space Mono&#39;, monospace;
+  }
+  .preview-dims { font-size: clamp(10px, 2.5vw, 12px); color: var(--muted); }
+  #svgSourceBadge { display: flex; gap: 6px; flex-wrap: wrap; }
+  .info-badge { font-size: clamp(10px, 2.5vw, 11px); padding: 2px 10px; border-radius: 20px; font-family: &#39;Space Mono&#39;, monospace; font-weight: 400; }
+  .info-ok { background: rgba(56,189,248,.12); color: var(--accent); border: 1px solid rgba(56,189,248,.3); }
+  .info-ai { background: rgba(252,211,77,.12); color: var(--yellow); border: 1px solid rgba(252,211,77,.3); }
+
+  /* ── HINT BOX ── */
+  .hint-box {
+    display: none;
+    background: rgba(248,113,113,.08);
+    border: 1px solid rgba(248,113,113,.3);
+    border-radius: 8px; padding: 10px 14px;
+    font-size: clamp(11px, 3vw, 13px); color: #fca5a5; margin-top: 10px; line-height: 1.6;
+  }
+
+  /* ── BUTTONS ── */
+  .btn-primary {
+    width: 100%; padding: 14px;
+    background: linear-gradient(135deg, var(--accent) 0%, #0284c7 100%);
+    border: none; border-radius: 10px; color: #fff;
+    font-family: &#39;Syne&#39;, sans-serif; font-size: clamp(13px, 3.5vw, 15px); font-weight: 700;
+    cursor: pointer; margin-top: 14px; transition: opacity .2s, transform .1s;
+    letter-spacing: 0.5px;
+  }
+  .btn-primary:hover:not(:disabled) { opacity: 0.92; transform: translateY(-1px); }
+  .btn-primary:disabled { opacity: .4; cursor: not-allowed; }
+  .btn-primary.loading { opacity: .7; }
+  .output-xml {
+    background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px; font-size: clamp(10px, 2.5vw, 12px);
+    color: var(--green); font-family: &#39;Space Mono&#39;, monospace;
+    max-height: 300px; overflow: auto; white-space: pre; margin-top: 14px;
+  }
+  .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+  .btn-secondary {
+    padding: 12px; background: var(--surface2);
+    border: 1px solid var(--border); border-radius: 10px;
+    color: var(--text); font-family: &#39;Space Mono&#39;, monospace;
+    cursor: pointer; font-size: clamp(11px, 3vw, 13px); font-weight: 400;
+    transition: border-color 0.2s;
+  }
+  .btn-secondary:hover { border-color: var(--accent); }
+  .btn-sm {
+    padding: 6px 13px; background: var(--surface2);
+    border: 1px solid var(--border); border-radius: 6px;
+    color: var(--text); font-family: &#39;Space Mono&#39;, monospace;
+    cursor: pointer; font-size: clamp(11px, 2.8vw, 13px); font-weight: 400;
+  }
+
+  /* ── LAYER LIST ── */
+  .layer-list { max-height: 220px; overflow-y: auto; margin-top: 10px; }
+  .layer-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 10px; background: var(--bg);
+    border: 1px solid var(--border); border-radius: 8px;
+    margin-bottom: 4px; font-size: clamp(11px, 3vw, 13px);
+  }
+  .layer-group-head {
+    font-size: clamp(10px, 2.5vw, 11px); color: var(--accent2);
+    font-weight: 600; letter-spacing: 2px; text-transform: uppercase;
+    padding: 6px 4px 2px; margin-top: 4px;
+  }
+  .layer-swatch { width: 14px; height: 14px; border-radius: 3px; border: 1px solid #444; flex-shrink: 0; }
+  .layer-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); font-size: clamp(11px, 3vw, 13px); }
+  .layer-tag {
+    font-size: clamp(9px, 2.3vw, 11px); padding: 1px 6px; border-radius: 4px;
+    border: 1px solid rgba(255,255,255,.15); background: rgba(255,255,255,.07);
+    color: var(--muted); font-family: &#39;Space Mono&#39;, monospace; white-space: nowrap;
+  }
+  .layer-actions { display: flex; gap: 6px; margin-top: 8px; }
+
+  /* ── OPTIONS ── */
+  .opt-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: clamp(12px, 3vw, 14px); }
+  .opt-row label { font-size: clamp(12px, 3vw, 14px); letter-spacing: 0; text-transform: none; font-weight: 400; color: var(--text); }
+  .sub-opts { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-top: 8px; display: none; }
+  .sub-opts.show { display: block; }
+
+  /* ── STATUS ── */
+  #statusText { font-size: clamp(11px, 3vw, 13px); color: var(--green); margin-top: 10px; font-weight: 400; }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    background: var(--accent); color: #fff;
+    padding: 9px 20px; border-radius: 20px;
+    font-size: clamp(12px, 3vw, 14px); font-weight: 700; z-index: 999; display: none;
+  }
+
+  /* ── MOBILE RESPONSIVE ── */
+  @media (max-width: 480px) {
+    .stats { grid-template-columns: 1fr 1fr; }
+    .field-row { grid-template-columns: 1fr; }
+    .btn-row { grid-template-columns: 1fr; }
+    .theme-toggle { top: 10px; right: 10px; padding: 6px 12px; font-size: 12px; }
+    .header { padding-top: 52px; }
+  }
+    </style>
+  </head>
+  <body>
+    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">
+      <span class="toggle-icon" id="themeIcon">      ☀️
+</span>
+      <span id="themeLabel">      Light Mode
+</span>
+    </button>
+    <div id="toast" class="toast">
+    </div>
+    <div class="container">
+      <div class="header">
+        <div class="logo-icon">
+          AM
+        </div>
+        <h1>
+          SVG → AM (V9 Engine optimized)
+        </h1>
+        <div class="subtitle">
+          Complete Logic · Transform · Layer Groups · Shape Detection
+        </div>
+      </div>
+      <!-- FEATURE INFO: STATS -->
+      <div class="feature-info">
+        <strong>        📊 Klasifikasi Konversi
+</strong>
+        Menampilkan ringkasan hasil parsing SVG secara real-time:
+        <ul>
+          <li>
+            <b>            Paths
+</b>
+            — jumlah elemen path/shape yang ditemukan di file SVG
+          </li>
+          <li>
+            <b>            Layers
+</b>
+            — total layer yang akan diekspor ke XML Alight Motion
+          </li>
+          <li>
+            <b>            Colors
+</b>
+            — jumlah warna unik yang terdeteksi dari seluruh elemen
+          </li>
+          <li>
+            <b>            Selected
+</b>
+            — jumlah layer yang dipilih untuk dikonversi
+          </li>
+        </ul>
+      </div>
+      <!-- STATS -->
+      <div class="stats">
+        <div class="stat-card">
+          <div class="stat-label">
+            Paths
+          </div>
+          <div class="stat-val" id="statPaths">
+            0
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">
+            Layers
+          </div>
+          <div class="stat-val" id="statLayers">
+            0
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">
+            Colors
+          </div>
+          <div class="stat-val" id="statColors">
+            0
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">
+            Selected
+          </div>
+          <div class="stat-val" id="statSelected">
+            0
+          </div>
+        </div>
+      </div>
+      <!-- FEATURE INFO: KONFIGURASI -->
+      <div class="feature-info">
+        <strong>        ⚙️ Konfigurasi Project
+</strong>
+        Atur parameter output XML agar sesuai dengan project Alight Motion kamu:
+        <ul>
+          <li>
+            <b>            Width / Height
+</b>
+            — resolusi kanvas output (default 1080×1080)
+          </li>
+          <li>
+            <b>            Start / End Time
+</b>
+            — durasi animasi dalam milidetik
+          </li>
+          <li>
+            <b>            Fill Mode
+</b>
+            — pilih mode warna: dari SVG asli, transparan, atau gradient
+          </li>
+          <li>
+            <b>            Blending
+</b>
+            — mode blending layer (Normal, Add, Multiply, dll.)
+          </li>
+          <li>
+            <b>            Tambah Stroke
+</b>
+            — aktifkan untuk menambah outline pada shape
+          </li>
+          <li>
+            <b>            Deteksi Shape Primitif
+</b>
+            — otomatis konversi ke tipe rect/circle AM
+          </li>
+        </ul>
+      </div>
+      <!-- KONFIGURASI PROJECT -->
+      <div class="section">
+        <div class="section-title">
+          ⚙ Konfigurasi Project
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>
+              Width (px)
+            </label>
+            <input type="number" id="amWHidden" value="1080" />
+          </div>
+          <div class="field">
+            <label>
+              Height (px)
+            </label>
+            <input type="number" id="amHHidden" value="1080" />
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>
+              Start Time (ms)
+            </label>
+            <input type="number" id="startTime" value="0" />
+          </div>
+          <div class="field">
+            <label>
+              End Time (ms)
+            </label>
+            <input type="number" id="endTime" value="2032" />
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>
+              Fill Mode
+            </label>
+            <select id="optFillType" onchange="toggleFillOpts()">
+              <option value="color">
+                Color (dari SVG)
+              </option>
+              <option value="none">
+                None / Transparent
+              </option>
+              <option value="gradient-linear">
+                Gradient Linear
+              </option>
+              <option value="gradient-radial">
+                Gradient Radial
+              </option>
+            </select>
+          </div>
+          <div class="field">
+            <label>
+              Blending
+            </label>
+            <select id="optBlend">
+              <option value="">
+                Normal
+              </option>
+              <option value="add">
+                Add
+              </option>
+              <option value="multiply">
+                Multiply
+              </option>
+              <option value="screen">
+                Screen
+              </option>
+              <option value="overlay">
+                Overlay
+              </option>
+            </select>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>
+              Opacity (0–1)
+            </label>
+            <input type="number" id="optOpacity" value="1" min="0" max="1" step="0.01" />
+          </div>
+          <div class="field">
+            <label>
+              Layer Group Mode
+            </label>
+            <select id="optGroup">
+              <option value="flat">
+                Flat (tanpa group)
+              </option>
+              <option value="embedScene">
+                embedScene (per layer)
+              </option>
+            </select>
+          </div>
+        </div>
+        <!-- Gradient Opts -->
+        <div class="sub-opts" id="gradientOpts">
+          <div class="field-row">
+            <div class="field">
+              <label>
+                Grad Start
+              </label>
+              <input type="color" id="gradStart" value="#00e5ff" />
+            </div>
+            <div class="field">
+              <label>
+                Grad End
+              </label>
+              <input type="color" id="gradEnd" value="#7c3aed" />
+            </div>
+          </div>
+        </div>
+        <!-- Stroke -->
+        <div class="opt-row">
+          <input type="checkbox" id="optStroke" onchange="toggleStrokeOpts()" />
+          <label for="optStroke">
+            Tambah Stroke
+          </label>
+        </div>
+        <div class="sub-opts" id="strokeOpts">
+          <div class="field-row">
+            <div class="field">
+              <label>
+                Stroke Size
+              </label>
+              <input type="number" id="strokeSize" value="5" min="0.1" step="0.5" />
+            </div>
+            <div class="field">
+              <label>
+                Stroke Join
+              </label>
+              <select id="strokeJoin">
+                <option value="miter">
+                  Miter
+                </option>
+                <option value="round">
+                  Round
+                </option>
+                <option value="bevel">
+                  Bevel
+                </option>
+              </select>
+            </div>
+          </div>
+          <div class="opt-row">
+            <input type="checkbox" id="strokeUseColor" />
+            <label for="strokeUseColor">
+              Custom Stroke Color
+            </label>
+            <input type="color" id="strokeColor" value="#ffffff" style="width:40px;height:30px;padding:2px;margin-left:auto;" />
+          </div>
+        </div>
+        <!-- Shape Primitive -->
+        <div class="opt-row">
+          <input type="checkbox" id="optShapePrim" />
+          <label for="optShapePrim">
+            Deteksi Shape Primitif AM (rect, circle, triangle)
+          </label>
+        </div>
+      </div>
+      <!-- FEATURE INFO: IMPORT SVG -->
+      <div class="feature-info">
+        <strong>        📁 Import &amp; Preview SVG
+</strong>
+        Upload file SVG untuk dikonversi ke format XML Alight Motion:
+        <ul>
+          <li>
+            Klik area dropzone atau drag &amp; drop file
+            <b>            .svg
+</b>
+            langsung
+          </li>
+          <li>
+            Preview interaktif:
+            <b>            scroll
+</b>
+            untuk zoom,
+            <b>            drag
+</b>
+            untuk pan
+          </li>
+          <li>
+            Tombol
+            <b>            Fit
+</b>
+            untuk reset tampilan ke ukuran awal
+          </li>
+          <li>
+            Support elemen: path, rect, circle, ellipse, polygon, polyline, line
+          </li>
+          <li>
+            Klik
+            <b>            ⚡ CONVERT TO XML
+</b>
+            setelah SVG berhasil diparse
+          </li>
+        </ul>
+      </div>
+      <!-- IMPORT SVG -->
+      <div class="section">
+        <div class="section-title">
+          📁 Import SVG
+        </div>
+        <div id="svgSourceBadge" style="margin-bottom:10px;">
+        </div>
+        <div class="dropzone" id="dropzone">
+          <input type="file" accept=".svg" id="fileInput" style="display:none" />
+          <div style="font-size:13px; color:var(--muted);">
+            📁 Klik atau Drop file SVG di sini
+          </div>
+          <div style="font-size:9px; color:var(--muted); margin-top:6px; letter-spacing:1px;">
+            SUPPORT: path · rect · circle · ellipse · polygon · polyline · line
+          </div>
+        </div>
+        <div class="preview-box" id="previewBox" style="display:none">
+          <div class="preview-canvas" id="previewArea">
+            <div id="svgViewport">
+            </div>
+            <div id="previewPlaceholder">
+              SVG preview akan muncul di sini
+            </div>
+          </div>
+          <div class="pv-bar" id="pvBar">
+            <span id="previewDims" class="preview-dims">            —
+</span>
+            <div style="display:flex;gap:6px;align-items:center;">
+              <span id="pvLabel" style="font-size:10px;color:var(--muted);min-width:30px;text-align:right;">              fit
+</span>
+              <button onclick="pvFit()">
+                Fit
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="hint-box" id="svgHintBox">
+        </div>
+        <button class="btn-primary" id="convertBtn" disabled="" onclick="startConvert()">
+          ⚡ CONVERT TO XML
+        </button>
+        <div id="statusText">
+        </div>
+      </div>
+      <!-- FEATURE INFO: LAYER EDITOR -->
+      <div class="feature-info">
+        <strong>        🗂️ Layer Editor
+</strong>
+        Pilih layer mana saja yang ingin diikutkan dalam hasil konversi:
+        <ul>
+          <li>
+            Centang/uncentang layer individual untuk memilih atau mengecualikannya
+          </li>
+          <li>
+            <b>            ✔ Semua
+</b>
+            — pilih semua layer sekaligus
+          </li>
+          <li>
+            <b>            ✘ Kosongkan
+</b>
+            — batalkan semua pilihan
+          </li>
+          <li>
+            Setiap layer menampilkan warna, nama, dan tipe elemen SVG-nya
+          </li>
+        </ul>
+      </div>
+      <!-- LAYER EDITOR -->
+      <div class="section" id="layerSection" style="display:none">
+        <div class="section-title">
+          🗂 Layer Editor
+        </div>
+        <div class="layer-actions">
+          <button class="btn-sm" onclick="selectAll(true)">
+            ✔ Semua
+          </button>
+          <button class="btn-sm" onclick="selectAll(false)">
+            ✘ Kosongkan
+          </button>
+        </div>
+        <div class="layer-list" id="layerList">
+          <div style="color:var(--muted);font-size:10px;text-align:center;padding:14px 0;">
+            Layer muncul setelah SVG diinput
+          </div>
+        </div>
+      </div>
+      <!-- FEATURE INFO: OUTPUT -->
+      <div class="feature-info">
+        <strong>        📄 Result XML — Output Alight Motion
+</strong>
+        Hasil konversi SVG ke format XML siap pakai di Alight Motion:
+        <ul>
+          <li>
+            <b>            📋 Copy XML
+</b>
+            — salin seluruh XML ke clipboard, lalu paste di Alight Motion
+          </li>
+          <li>
+            <b>            💾 Save .xml
+</b>
+            — unduh file XML dengan nama otomatis dari file SVG
+          </li>
+          <li>
+            Nama file otomatis terurut (001, 002, ...) setiap kali di-download
+          </li>
+          <li>
+            Import XML di Alight Motion:
+            <i>            + → Import → pilih file .xml
+</i>
+          </li>
+        </ul>
+      </div>
+      <!-- OUTPUT -->
+      <div class="section" id="outputSection" style="display:none">
+        <div class="section-title">
+          📄 Result XML
+        </div>
+        <div class="btn-row">
+          <button class="btn-secondary" onclick="copyResult()">
+            📋 Copy XML
+          </button>
+          <button class="btn-secondary" style="background:var(--accent2); border:none; color:#fff;" onclick="downloadXml()">
+            💾 Save .xml
+          </button>
+        </div>
+        <div class="output-xml" id="outputXml">
+        </div>
+      </div>
+    </div>
+    <script>
+      // ═══════════════════════════════════════════════════
+// THEME TOGGLE (CSS only — no logic changes)
+// ═══════════════════════════════════════════════════
+function toggleTheme() {
+  const body = document.body;
+  const icon = document.getElementById(&#39;themeIcon&#39;);
+  const label = document.getElementById(&#39;themeLabel&#39;);
+  if (body.classList.contains(&#39;light&#39;)) {
+    body.classList.remove(&#39;light&#39;);
+    icon.textContent = &#39;☀️&#39;;
+    label.textContent = &#39;Light Mode&#39;;
+  } else {
+    body.classList.add(&#39;light&#39;);
+    icon.textContent = &#39;🌙&#39;;
+    label.textContent = &#39;Dark Mode&#39;;
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════
+let parsedPaths = [];
+let currentSvgText = &#39;&#39;;
+let svgFileName = &#39;&#39;;
+let xmlCounter = 1;
+let pvState = { scale: 1, tx: 0, ty: 0 };
+let pvDrag = null;
+
+// ═══════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════
+function toast(msg) {
+  const t = document.getElementById(&#39;toast&#39;);
+  t.textContent = msg; t.style.display = &#39;block&#39;;
+  setTimeout(() =&gt; t.style.display = &#39;none&#39;, 2000);
+}
+
+// ═══════════════════════════════════════════════════
+// NAMED COLOR MAP
+// ═══════════════════════════════════════════════════
+const NAMED_COLORS = {
+  black:&#34;000000&#34;,white:&#34;ffffff&#34;,red:&#34;ff0000&#34;,green:&#34;008000&#34;,blue:&#34;0000ff&#34;,
+  yellow:&#34;ffff00&#34;,cyan:&#34;00ffff&#34;,magenta:&#34;ff00ff&#34;,orange:&#34;ffa500&#34;,
+  purple:&#34;800080&#34;,pink:&#34;ffc0cb&#34;,brown:&#34;a52a2a&#34;,gray:&#34;808080&#34;,grey:&#34;808080&#34;,
+  lime:&#34;00ff00&#34;,maroon:&#34;800000&#34;,navy:&#34;000080&#34;,olive:&#34;808000&#34;,teal:&#34;008080&#34;,
+  silver:&#34;c0c0c0&#34;,aqua:&#34;00ffff&#34;,fuchsia:&#34;ff00ff&#34;,transparent:&#34;00000000&#34;,none:null
+};
+
+function parseCssColor(raw) {
+  if (!raw) return null;
+  raw = raw.trim().toLowerCase();
+  if (raw === &#34;none&#34; || raw === &#34;transparent&#34;) return null;
+  if (NAMED_COLORS.hasOwnProperty(raw)) {
+    if (NAMED_COLORS[raw] === null) return null;
+    const h = NAMED_COLORS[raw];
+    return { r: parseInt(h.slice(0,2),16), g: parseInt(h.slice(2,4),16), b: parseInt(h.slice(4,6),16), a: 255 };
+  }
+  const h2i = s =&gt; parseInt(s,16);
+  const hm = raw.match(/^#([0-9a-f]{3,8})$/);
+  if (hm) {
+    let h = hm[1];
+    if (h.length === 3) h = h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
+    if (h.length === 4) h = h[0]+h[0]+h[1]+h[1]+h[2]+h[2]+h[3]+h[3];
+    if (h.length === 6) return {r:h2i(h.slice(0,2)),g:h2i(h.slice(2,4)),b:h2i(h.slice(4,6)),a:255};
+    if (h.length === 8) return {r:h2i(h.slice(0,2)),g:h2i(h.slice(2,4)),b:h2i(h.slice(4,6)),a:h2i(h.slice(6,8))};
+  }
+  const rgb = raw.match(/rgba?\(\s*([\d.]+%?)\s*,\s*([\d.]+%?)\s*,\s*([\d.]+%?)(?:\s*,\s*([\d.]+%?))?\s*\)/);
+  if (rgb) {
+    const pv = v =&gt; v.endsWith(&#39;%&#39;) ? Math.round(parseFloat(v)*2.55) : Math.round(parseFloat(v));
+    const av = v =&gt; v ? (v.endsWith(&#39;%&#39;) ? Math.round(parseFloat(v)*2.55) : Math.round(parseFloat(v)*255)) : 255;
+    return {r:pv(rgb[1]),g:pv(rgb[2]),b:pv(rgb[3]),a:av(rgb[4])};
+  }
+  return null;
+}
+
+function parseStyleObj(str) {
+  const o = {}; if (!str) return o;
+  str.split(&#39;;&#39;).forEach(p =&gt; { const i = p.indexOf(&#39;:&#39;); if (i &lt; 0) return; o[p.slice(0,i).trim().toLowerCase()] = p.slice(i+1).trim(); });
+  return o;
+}
+
+// ═══════════════════════════════════════════════════
+// CSS CLASS PARSER (dari &lt;style&gt; di SVG)
+// ═══════════════════════════════════════════════════
+function parseSvgStyles(svgEl) {
+  const classMap = {};
+  svgEl.querySelectorAll(&#39;style&#39;).forEach(styleEl =&gt; {
+    const txt = styleEl.textContent || &#39;&#39;;
+    const ruleRe = /\.([^\s{,]+)\s*\{([^}]*)\}/g;
+    let m;
+    while ((m = ruleRe.exec(txt)) !== null) {
+      classMap[m[1].trim()] = parseStyleObj(m[2]);
+    }
+  });
+  return classMap;
+}
+
+// ═══════════════════════════════════════════════════
+// FILL COLOR RESOLVER (class-aware, ancestor inheritance)
+// ═══════════════════════════════════════════════════
+function getFillColorV7(el, classMap) {
+  let fillRaw = null, opacityRaw = null;
+  let node = el;
+  while (node &amp;&amp; node.getAttribute) {
+    const sty = parseStyleObj(node.getAttribute(&#39;style&#39;));
+    if (!fillRaw &amp;&amp; sty[&#39;fill&#39;]) { if (sty[&#39;fill&#39;] !== &#39;inherit&#39;) fillRaw = sty[&#39;fill&#39;]; }
+    if (!fillRaw) {
+      const cls = (node.getAttribute(&#39;class&#39;) || &#39;&#39;).trim().split(/\s+/);
+      for (const c of cls) {
+        if (classMap[c] &amp;&amp; classMap[c][&#39;fill&#39;]) { fillRaw = classMap[c][&#39;fill&#39;]; break; }
+      }
+    }
+    if (!fillRaw) { const f = node.getAttribute(&#39;fill&#39;); if (f &amp;&amp; f !== &#39;inherit&#39;) fillRaw = f; }
+    if (!opacityRaw) {
+      const op = sty[&#39;fill-opacity&#39;] || node.getAttribute(&#39;fill-opacity&#39;);
+      if (op != null &amp;&amp; op !== &#39;&#39;) opacityRaw = op;
+    }
+    if (fillRaw &amp;&amp; opacityRaw) break;
+    node = node.parentElement;
+  }
+  if (!fillRaw) fillRaw = &#39;#000000&#39;;
+  const c = parseCssColor(fillRaw);
+  if (!c) return null;
+  const opacity = opacityRaw != null ? Math.max(0, Math.min(1, parseFloat(opacityRaw))) : 1.0;
+  const alpha = Math.round((c.a / 255) * opacity * 255);
+  const h2 = n =&gt; Math.max(0, Math.min(255, Math.round(n))).toString(16).padStart(2, &#39;0&#39;);
+  return { amColor: `${h2(alpha)}${h2(c.r)}${h2(c.g)}${h2(c.b)}`, cssHex: `#${h2(c.r)}${h2(c.g)}${h2(c.b)}` };
+}
+
+function getStrokeColor(el) {
+  let strokeRaw = null, widthRaw = null, fillRaw = null;
+  let node = el;
+  while (node &amp;&amp; node.getAttribute) {
+    const sty = parseStyleObj(node.getAttribute(&#39;style&#39;));
+    if (!strokeRaw) { const s = sty[&#39;stroke&#39;] || node.getAttribute(&#39;stroke&#39;); if (s &amp;&amp; s !== &#39;inherit&#39; &amp;&amp; s !== &#39;none&#39;) strokeRaw = s; }
+    if (!widthRaw) { const w = sty[&#39;stroke-width&#39;] || node.getAttribute(&#39;stroke-width&#39;); if (w != null &amp;&amp; w !== &#39;&#39;) widthRaw = w; }
+    if (!fillRaw) { const f = sty[&#39;fill&#39;] || node.getAttribute(&#39;fill&#39;); if (f &amp;&amp; f !== &#39;inherit&#39;) fillRaw = f; }
+    if (strokeRaw &amp;&amp; fillRaw) break;
+    node = node.parentElement;
+  }
+  const isStrokeOnly = fillRaw === &#39;none&#39; || fillRaw === &#39;transparent&#39;;
+  return { raw: strokeRaw, width: widthRaw ? parseFloat(widthRaw) : null, isStrokeOnly };
+}
+
+// ═══════════════════════════════════════════════════
+// LABEL SANITIZER
+// ═══════════════════════════════════════════════════
+function sanitizeLabel(str) {
+  if (!str) return &#39;Shape&#39;;
+  str = str.replace(/^&lt;(.+)&gt;$/, &#39;$1&#39;);
+  str = str.replace(/[&lt;&gt;&amp;&#34;&#39;]/g, &#39;&#39;);
+  str = str.replace(/·/g, &#39;-&#39;);
+  str = str.replace(/\s+/g, &#39; &#39;).trim();
+  return str || &#39;Shape&#39;;
+}
+
+// ═══════════════════════════════════════════════════
+// LAYER INFO (Inkscape groupmode, id, data-name)
+// ═══════════════════════════════════════════════════
+function getLayerInfo(el, index) {
+  let layerName = null, subGroupName = null;
+  let node = el.parentElement;
+  let depth = 0;
+  while (node &amp;&amp; node.tagName &amp;&amp; node.tagName.toLowerCase() !== &#39;svg&#39;) {
+    const tag = node.tagName.toLowerCase();
+    if (tag === &#39;g&#39;) {
+      const groupMode = node.getAttribute(&#39;inkscape:groupmode&#39;);
+      const inkLabel = node.getAttribute(&#39;inkscape:label&#39;);
+      const dataName = node.getAttribute(&#39;data-name&#39;);
+      const nodeId = node.getAttribute(&#39;id&#39;) || &#39;&#39;;
+      if (groupMode === &#39;layer&#39; &amp;&amp; inkLabel) {
+        layerName = sanitizeLabel(inkLabel.trim());
+      } else if (!layerName &amp;&amp; depth === 0) {
+        const gLabel = inkLabel || dataName;
+        if (gLabel &amp;&amp; !gLabel.match(/^(g\d+|layer\d*|group\d*)$/i)) {
+          subGroupName = sanitizeLabel(gLabel.trim());
+        } else if (nodeId &amp;&amp; !nodeId.match(/^(g\d+|layer\d*|group\d*)$/i)) {
+          subGroupName = sanitizeLabel(nodeId.trim());
+        }
+      }
+      depth++;
+    }
+    node = node.parentElement;
+  }
+  const selfId = el.getAttribute(&#39;id&#39;) || &#39;&#39;;
+  const selfDataName = el.getAttribute(&#39;data-name&#39;) || &#39;&#39;;
+  const selfInkLabel = el.getAttribute(&#39;inkscape:label&#39;) || &#39;&#39;;
+  const selfLabelRaw = selfInkLabel || selfDataName ||
+    (selfId &amp;&amp; !selfId.match(/^(path|rect|circle|ellipse|polygon|line|polyline|use)\d+$/i) ? selfId : null);
+  const selfLabel = selfLabelRaw ? sanitizeLabel(selfLabelRaw) : null;
+  const idx = String(index + 1).padStart(3, &#39;0&#39;);
+  if (layerName) {
+    if (selfLabel &amp;&amp; selfLabel !== layerName) return { layerName, fullLabel: `${layerName}_${selfLabel}`, isFromLayer: true };
+    return { layerName, fullLabel: `${layerName}_path_${idx}`, isFromLayer: true };
+  }
+  if (subGroupName) return { layerName: subGroupName, fullLabel: `${subGroupName}_path_${idx}`, isFromLayer: false };
+  if (selfLabel) return { layerName: null, fullLabel: selfLabel, isFromLayer: false };
+  return { layerName: null, fullLabel: `Shape_${idx}`, isFromLayer: false };
+}
+
+// ═══════════════════════════════════════════════════
+// MATRIX TRANSFORM PARSER
+// ═══════════════════════════════════════════════════
+function parseTransformMatrix(transformStr) {
+  if (!transformStr) return null;
+  const matM = transformStr.match(/matrix\(\s*([\d.eE+\-]+)[,\s]+([\d.eE+\-]+)[,\s]+([\d.eE+\-]+)[,\s]+([\d.eE+\-]+)[,\s]+([\d.eE+\-]+)[,\s]+([\d.eE+\-]+)\s*\)/);
+  if (matM) return { a:+matM[1], b:+matM[2], c:+matM[3], d:+matM[4], e:+matM[5], f:+matM[6] };
+  const trM = transformStr.match(/translate\(\s*([\d.eE+\-]+)(?:[,\s]+([\d.eE+\-]+))?\s*\)/);
+  if (trM) return { a:1, b:0, c:0, d:1, e:+trM[1], f:trM[2]?+trM[2]:0 };
+  const scM = transformStr.match(/scale\(\s*([\d.eE+\-]+)(?:[,\s]+([\d.eE+\-]+))?\s*\)/);
+  if (scM) { const sx=+scM[1], sy=scM[2]?+scM[2]:sx; return {a:sx,b:0,c:0,d:sy,e:0,f:0}; }
+  return null;
+}
+
+function getAccumulatedTransform(el) {
+  let a=1,b=0,c=0,d=1,e=0,f=0;
+  const mats = [];
+  let node = el;
+  while (node &amp;&amp; node.tagName &amp;&amp; node.tagName.toLowerCase() !== &#39;svg&#39;) {
+    const t = node.getAttribute(&#39;transform&#39;);
+    if (t) { const m = parseTransformMatrix(t); if (m) mats.unshift(m); }
+    node = node.parentElement;
+  }
+  for (const m of mats) {
+    const na=a*m.a+b*m.c, nb=a*m.b+b*m.d, nc=c*m.a+d*m.c, nd_=c*m.b+d*m.d;
+    const ne=e*m.a+f*m.c+m.e, nf=e*m.b+f*m.d+m.f;
+    a=na;b=nb;c=nc;d=nd_;e=ne;f=nf;
+  }
+  return {a,b,c,d,e,f};
+}
+
+function applyMatrix(m, x, y) {
+  return { x: m.a*x + m.c*y + m.e, y: m.b*x + m.d*y + m.f };
+}
+
+// ═══════════════════════════════════════════════════
+// hexToAM
+// ═══════════════════════════════════════════════════
+function hexToAM(hex, alpha=255) {
+  const c = parseCssColor(hex);
+  if (!c) return &#39;ff000000&#39;;
+  const h2 = n =&gt; Math.max(0,Math.min(255,n)).toString(16).padStart(2,&#39;0&#39;);
+  return `${h2(alpha)}${h2(c.r)}${h2(c.g)}${h2(c.b)}`;
+}
+
+// ═══════════════════════════════════════════════════
+// TRANSFORM PATH — stateful cursor (fixes NaN)
+// ═══════════════════════════════════════════════════
+function transformPath(d, cx, cy, globalScale, mat) {
+  if (!d) return &#39;&#39;;
+  const f = n =&gt; { if (!isFinite(n)) return &#39;0&#39;; return parseFloat(n.toFixed(4)); };
+  function pt(x, y) {
+    let px=x, py=y;
+    if (mat) { px=mat.a*x+mat.c*y+mat.e; py=mat.b*x+mat.d*y+mat.f; }
+    return { x:(px-cx)*globalScale, y:(py-cy)*globalScale };
+  }
+  function dlt(dx, dy) {
+    if (mat) return { x:(mat.a*dx+mat.c*dy)*globalScale, y:(mat.b*dx+mat.d*dy)*globalScale };
+    return { x:dx*globalScale, y:dy*globalScale };
+  }
+  const segments = [];
+  const re = /([MmLlHhVvCcSsQqTtAaZz])([^MmLlHhVvCcSsQqTtAaZz]*)/g;
+  let tok;
+  while ((tok = re.exec(d)) !== null) {
+    const cmd = tok[1];
+    const raw = tok[2].trim().replace(/([eE][+-]?\d+)/g,&#39;$1&#39;).replace(/,/g,&#39; &#39;).replace(/([^\se])-/g,&#39;$1 -&#39;).replace(/\s+/g,&#39; &#39;).trim();
+    const nums = raw === &#39;&#39; ? [] : raw.split(&#39; &#39;).map(parseFloat).filter(n=&gt;!isNaN(n));
+    segments.push({cmd,nums});
+  }
+  let lx=0,ly=0,mx=0,my=0;
+  const out=[];
+  for (const {cmd,nums} of segments) {
+    switch(cmd) {
+      case &#39;M&#39;: for(let i=0;i&lt;nums.length;i+=2){const p=pt(nums[i],nums[i+1]);lx=p.x;ly=p.y;if(i===0){mx=lx;my=ly;out.push(`M ${f(lx)} ${f(ly)}`);}else out.push(`L ${f(lx)} ${f(ly)}`);} break;
+      case &#39;m&#39;: for(let i=0;i&lt;nums.length;i+=2){const d2=dlt(nums[i],nums[i+1]);lx+=d2.x;ly+=d2.y;if(i===0){mx=lx;my=ly;out.push(`M ${f(lx)} ${f(ly)}`);}else out.push(`L ${f(lx)} ${f(ly)}`);} break;
+      case &#39;L&#39;: for(let i=0;i&lt;nums.length;i+=2){const p=pt(nums[i],nums[i+1]);lx=p.x;ly=p.y;out.push(`L ${f(lx)} ${f(ly)}`);} break;
+      case &#39;l&#39;: for(let i=0;i&lt;nums.length;i+=2){const d2=dlt(nums[i],nums[i+1]);lx+=d2.x;ly+=d2.y;out.push(`L ${f(lx)} ${f(ly)}`);} break;
+      case &#39;H&#39;: for(let i=0;i&lt;nums.length;i++){const svgY=ly/globalScale+cy;if(mat){const p=pt(nums[i],svgY);lx=p.x;ly=p.y;}else{lx=(nums[i]-cx)*globalScale;}out.push(`L ${f(lx)} ${f(ly)}`);} break;
+      case &#39;h&#39;: for(let i=0;i&lt;nums.length;i++){const d2=dlt(nums[i],0);lx+=d2.x;ly+=d2.y;out.push(`L ${f(lx)} ${f(ly)}`);} break;
+      case &#39;V&#39;: for(let i=0;i&lt;nums.length;i++){const svgX=lx/globalScale+cx;if(mat){const p=pt(svgX,nums[i]);lx=p.x;ly=p.y;}else{ly=(nums[i]-cy)*globalScale;}out.push(`L ${f(lx)} ${f(ly)}`);} break;
+      case &#39;v&#39;: for(let i=0;i&lt;nums.length;i++){const d2=dlt(0,nums[i]);lx+=d2.x;ly+=d2.y;out.push(`L ${f(lx)} ${f(ly)}`);} break;
+      case &#39;C&#39;: for(let i=0;i&lt;nums.length;i+=6){const p1=pt(nums[i],nums[i+1]),p2=pt(nums[i+2],nums[i+3]),p3=pt(nums[i+4],nums[i+5]);out.push(`C ${f(p1.x)} ${f(p1.y)}, ${f(p2.x)} ${f(p2.y)}, ${f(p3.x)} ${f(p3.y)}`);lx=p3.x;ly=p3.y;} break;
+      case &#39;c&#39;: for(let i=0;i&lt;nums.length;i+=6){const d1=dlt(nums[i],nums[i+1]),d2=dlt(nums[i+2],nums[i+3]),d3=dlt(nums[i+4],nums[i+5]);const p1x=lx+d1.x,p1y=ly+d1.y,p2x=lx+d2.x,p2y=ly+d2.y,p3x=lx+d3.x,p3y=ly+d3.y;out.push(`C ${f(p1x)} ${f(p1y)}, ${f(p2x)} ${f(p2y)}, ${f(p3x)} ${f(p3y)}`);lx=p3x;ly=p3y;} break;
+      case &#39;S&#39;: for(let i=0;i&lt;nums.length;i+=4){const p2=pt(nums[i],nums[i+1]),p3=pt(nums[i+2],nums[i+3]);out.push(`C ${f(lx)} ${f(ly)}, ${f(p2.x)} ${f(p2.y)}, ${f(p3.x)} ${f(p3.y)}`);lx=p3.x;ly=p3.y;} break;
+      case &#39;s&#39;: for(let i=0;i&lt;nums.length;i+=4){const d2=dlt(nums[i],nums[i+1]),d3=dlt(nums[i+2],nums[i+3]);const p3x=lx+d3.x,p3y=ly+d3.y;out.push(`C ${f(lx)} ${f(ly)}, ${f(lx+d2.x)} ${f(ly+d2.y)}, ${f(p3x)} ${f(p3y)}`);lx=p3x;ly=p3y;} break;
+      case &#39;Q&#39;: for(let i=0;i&lt;nums.length;i+=4){const qp=pt(nums[i],nums[i+1]),ep=pt(nums[i+2],nums[i+3]);const cp1x=lx+(2/3)*(qp.x-lx),cp1y=ly+(2/3)*(qp.y-ly),cp2x=ep.x+(2/3)*(qp.x-ep.x),cp2y=ep.y+(2/3)*(qp.y-ep.y);out.push(`C ${f(cp1x)} ${f(cp1y)}, ${f(cp2x)} ${f(cp2y)}, ${f(ep.x)} ${f(ep.y)}`);lx=ep.x;ly=ep.y;} break;
+      case &#39;q&#39;: for(let i=0;i&lt;nums.length;i+=4){const dq=dlt(nums[i],nums[i+1]),de=dlt(nums[i+2],nums[i+3]);const qx=lx+dq.x,qy=ly+dq.y,ex_=lx+de.x,ey_=ly+de.y;const cp1x=lx+(2/3)*(qx-lx),cp1y=ly+(2/3)*(qy-ly),cp2x=ex_+(2/3)*(qx-ex_),cp2y=ey_+(2/3)*(qy-ey_);out.push(`C ${f(cp1x)} ${f(cp1y)}, ${f(cp2x)} ${f(cp2y)}, ${f(ex_)} ${f(ey_)}`);lx=ex_;ly=ey_;} break;
+      case &#39;T&#39;: for(let i=0;i&lt;nums.length;i+=2){const p=pt(nums[i],nums[i+1]);out.push(`C ${f(lx)} ${f(ly)}, ${f(lx)} ${f(ly)}, ${f(p.x)} ${f(p.y)}`);lx=p.x;ly=p.y;} break;
+      case &#39;t&#39;: for(let i=0;i&lt;nums.length;i+=2){const de=dlt(nums[i],nums[i+1]);lx+=de.x;ly+=de.y;out.push(`C ${f(lx)} ${f(ly)}, ${f(lx)} ${f(ly)}, ${f(lx)} ${f(ly)}`);} break;
+      case &#39;A&#39;: for(let i=0;i&lt;nums.length;i+=7){const sx=lx,sy=ly;const trx=nums[i]*globalScale,try_=nums[i+1]*globalScale;const rot=nums[i+2],la=nums[i+3],sw=nums[i+4];const p=pt(nums[i+5],nums[i+6]);const curves=arcToCubics(sx,sy,trx,try_,rot,la,sw,p.x,p.y);if(curves.length){for(const[cp1x,cp1y,cp2x,cp2y,ex_,ey_] of curves)out.push(`C ${f(cp1x)} ${f(cp1y)}, ${f(cp2x)} ${f(cp2y)}, ${f(ex_)} ${f(ey_)}`);lx=p.x;ly=p.y;}else{out.push(`L ${f(p.x)} ${f(p.y)}`);lx=p.x;ly=p.y;}} break;
+      case &#39;a&#39;: for(let i=0;i&lt;nums.length;i+=7){const sx=lx,sy=ly;const trx=nums[i]*globalScale,try_=nums[i+1]*globalScale;const rot=nums[i+2],la=nums[i+3],sw=nums[i+4];const d2=dlt(nums[i+5],nums[i+6]);const ex_=lx+d2.x,ey_=ly+d2.y;const curves=arcToCubics(sx,sy,trx,try_,rot,la,sw,ex_,ey_);if(curves.length){for(const[cp1x,cp1y,cp2x,cp2y,ex2,ey2] of curves)out.push(`C ${f(cp1x)} ${f(cp1y)}, ${f(cp2x)} ${f(cp2y)}, ${f(ex2)} ${f(ey2)}`);lx=ex_;ly=ey_;}else{out.push(`L ${f(ex_)} ${f(ey_)}`);lx=ex_;ly=ey_;}} break;
+      case &#39;Z&#39;: case &#39;z&#39;: out.push(&#39;Z&#39;); lx=mx; ly=my; break;
+    }
+  }
+  return out.join(&#39; &#39;);
+}
+
+// ═══════════════════════════════════════════════════
+// ARC TO CUBICS
+// ═══════════════════════════════════════════════════
+function arcToCubics(x1,y1,rx,ry,xRot,largeArc,sweep,x2,y2) {
+  if(x1===x2&amp;&amp;y1===y2) return [];
+  if(rx===0||ry===0) return [[x1,y1,x1,y1,x2,y2]];
+  const phi=xRot*Math.PI/180;
+  const cosPhi=Math.cos(phi),sinPhi=Math.sin(phi);
+  const dx=(x1-x2)/2,dy=(y1-y2)/2;
+  const x1p=cosPhi*dx+sinPhi*dy,y1p=-sinPhi*dx+cosPhi*dy;
+  let rxSq=rx*rx,rySq=ry*ry,x1pSq=x1p*x1p,y1pSq=y1p*y1p;
+  let sq=((rxSq*rySq-rxSq*y1pSq-rySq*x1pSq)/(rxSq*y1pSq+rySq*x1pSq));
+  if(sq&lt;0) sq=0;
+  const coef=(largeArc===sweep?-1:1)*Math.sqrt(sq);
+  const cxp=coef*rx*y1p/ry,cyp=-coef*ry*x1p/rx;
+  const cx=cosPhi*cxp-sinPhi*cyp+(x1+x2)/2;
+  const cy=sinPhi*cxp+cosPhi*cyp+(y1+y2)/2;
+  const ang1=Math.atan2((y1p-cyp)/ry,(x1p-cxp)/rx);
+  let dAng=Math.atan2((-y1p-cyp)/ry,(-x1p-cxp)/rx)-ang1;
+  if(!sweep&amp;&amp;dAng&gt;0) dAng-=2*Math.PI;
+  if(sweep&amp;&amp;dAng&lt;0) dAng+=2*Math.PI;
+  const n=Math.ceil(Math.abs(dAng)/(Math.PI/2));
+  const step=dAng/n;
+  const KAPPA=(4/3)*Math.tan(step/4);
+  const curves=[];
+  let ang=ang1;
+  for(let i=0;i&lt;n;i++){
+    const cosA=Math.cos(ang),sinA=Math.sin(ang);
+    const cosB=Math.cos(ang+step),sinB=Math.sin(ang+step);
+    const sx=cx+cosPhi*rx*cosA-sinPhi*ry*sinA;
+    const sy=cy+sinPhi*rx*cosA+cosPhi*ry*sinA;
+    const ex=cx+cosPhi*rx*cosB-sinPhi*ry*sinB;
+    const ey=cy+sinPhi*rx*cosB+cosPhi*ry*sinB;
+    const dxS=-cosPhi*rx*sinA-sinPhi*ry*cosA,dyS=-sinPhi*rx*sinA+cosPhi*ry*cosA;
+    const dxE=-cosPhi*rx*sinB-sinPhi*ry*cosB,dyE=-sinPhi*rx*sinB+cosPhi*ry*cosB;
+    curves.push([sx+KAPPA*dxS,sy+KAPPA*dyS,ex-KAPPA*dxE,ey-KAPPA*dyE,ex,ey]);
+    ang+=step;
+  }
+  return curves;
+}
+
+// ═══════════════════════════════════════════════════
+// SHAPE DETECTION ENGINE
+// ═══════════════════════════════════════════════════
+function detectShape(d, globalScale) {
+  if (!d) return null;
+  const EPS=0.5, BEZEPS=0.06;
+  const segs=[]; const re=/([MmLlHhVvCcSsQqTtAaZz])([^MmLlHhVvCcSsQqTtAaZz]*)/g; let m;
+  while((m=re.exec(d))!==null){const cmd=m[1];const nums=m[2].trim().replace(/,/g,&#39; &#39;).replace(/([^\se])-/g,&#39;$1 -&#39;).split(/\s+/).map(parseFloat).filter(n=&gt;!isNaN(n));segs.push({cmd,nums});}
+  let pts=[],cSegs=[],lx=0,ly=0,mx=0,my=0,hasOnlyLinear=true,hasCubic=false,cmdList=[];
+  for(const{cmd,nums}of segs){
+    const u=cmd.toUpperCase();cmdList.push(u);
+    if(u===&#39;M&#39;){lx=nums[0];ly=nums[1];mx=lx;my=ly;pts.push({x:lx,y:ly});}
+    else if(u===&#39;m&#39;){lx+=nums[0];ly+=nums[1];mx=lx;my=ly;pts.push({x:lx,y:ly});}
+    else if(u===&#39;L&#39;){lx=nums[0];ly=nums[1];pts.push({x:lx,y:ly});}
+    else if(u===&#39;l&#39;){lx+=nums[0];ly+=nums[1];pts.push({x:lx,y:ly});}
+    else if(u===&#39;H&#39;){lx=nums[0];pts.push({x:lx,y:ly});}
+    else if(u===&#39;h&#39;){lx+=nums[0];pts.push({x:lx,y:ly});}
+    else if(u===&#39;V&#39;){ly=nums[0];pts.push({x:lx,y:ly});}
+    else if(u===&#39;v&#39;){ly+=nums[0];pts.push({x:lx,y:ly});}
+    else if(u===&#39;C&#39;){hasCubic=true;hasOnlyLinear=false;for(let i=0;i&lt;nums.length;i+=6){const sx=lx,sy=ly;const cp1x=nums[i],cp1y=nums[i+1],cp2x=nums[i+2],cp2y=nums[i+3],ex=nums[i+4],ey=nums[i+5];cSegs.push({sx,sy,cp1x,cp1y,cp2x,cp2y,ex,ey});lx=ex;ly=ey;pts.push({x:lx,y:ly});}}
+    else if(u===&#39;c&#39;){hasCubic=true;hasOnlyLinear=false;for(let i=0;i&lt;nums.length;i+=6){const sx=lx,sy=ly;const cp1x=lx+nums[i],cp1y=ly+nums[i+1],cp2x=lx+nums[i+2],cp2y=ly+nums[i+3],ex=lx+nums[i+4],ey=ly+nums[i+5];cSegs.push({sx,sy,cp1x,cp1y,cp2x,cp2y,ex,ey});lx=ex;ly=ey;pts.push({x:lx,y:ly});}}
+    else if(u===&#39;Z&#39;){pts.push({x:mx,y:my});lx=mx;ly=my;}
+    else{hasOnlyLinear=false;}
+  }
+  if(!pts.length) return null;
+  const minX=Math.min(...pts.map(p=&gt;p.x)),maxX=Math.max(...pts.map(p=&gt;p.x));
+  const minY=Math.min(...pts.map(p=&gt;p.y)),maxY=Math.max(...pts.map(p=&gt;p.y));
+  const W=maxX-minX,H=maxY-minY,cxS=(minX+maxX)/2,cyS=(minY+maxY)/2;
+  if(hasOnlyLinear){
+    const uniq=pts.filter((p,i,a)=&gt;a.findIndex(q=&gt;Math.abs(q.x-p.x)&lt;EPS&amp;&amp;Math.abs(q.y-p.y)&lt;EPS)===i);
+    if(uniq.length===3){const sc=globalScale;const p1x=(uniq[0].x-cxS)*sc,p1y=(uniq[0].y-cyS)*sc,p2x=(uniq[1].x-cxS)*sc,p2y=(uniq[1].y-cyS)*sc,p3x=(uniq[2].x-cxS)*sc,p3y=(uniq[2].y-cyS)*sc;return{type:&#39;.triangle&#39;,cx:cxS,cy:cyS,w:W*sc,h:H*sc,props:[`&lt;property name=&#34;p1&#34; type=&#34;vec2&#34; value=&#34;${p1x.toFixed(6)},${p1y.toFixed(6)}&#34; /&gt;`,`&lt;property name=&#34;p2&#34; type=&#34;vec2&#34; value=&#34;${p2x.toFixed(6)},${p2y.toFixed(6)}&#34; /&gt;`,`&lt;property name=&#34;p3&#34; type=&#34;vec2&#34; value=&#34;${p3x.toFixed(6)},${p3y.toFixed(6)}&#34; /&gt;`,`&lt;property name=&#34;closed&#34; type=&#34;bool&#34; value=&#34;true&#34; /&gt;`]};}
+    if(uniq.length===4){const xs=uniq.map(p=&gt;p.x),ys=uniq.map(p=&gt;p.y);const uxs=[...new Set(xs.map(v=&gt;Math.round(v*10)/10))],uys=[...new Set(ys.map(v=&gt;Math.round(v*10)/10))];if(uxs.length===2&amp;&amp;uys.length===2){const rw=(maxX-minX)*globalScale,rh=(maxY-minY)*globalScale;return{type:&#39;.rect&#39;,cx:cxS,cy:cyS,w:rw,h:rh,props:[`&lt;property name=&#34;size&#34; type=&#34;vec2&#34; value=&#34;${rw.toFixed(6)},${rh.toFixed(6)}&#34; /&gt;`]};}}
+  }
+  if(hasCubic&amp;&amp;cSegs.length===4){const KAPPA=0.5522847498;const rx=W/2,ry=H/2;let isCircular=true;for(const s of cSegs){const d1x=Math.abs(s.cp1x-s.sx),d1y=Math.abs(s.cp1y-s.sy),d2x=Math.abs(s.cp2x-s.ex),d2y=Math.abs(s.cp2y-s.ey);const maxD1=Math.max(d1x,d1y),maxD2=Math.max(d2x,d2y);const expectedR=Math.max(rx,ry)*KAPPA;if(Math.abs(maxD1-expectedR)&gt;expectedR*0.15&amp;&amp;Math.abs(maxD2-expectedR)&gt;expectedR*0.15){isCircular=false;break;}}if(isCircular){const amW=W*globalScale,amH=H*globalScale;return{type:&#39;.circle&#39;,cx:cxS,cy:cyS,w:amW,h:amH,props:[`&lt;property name=&#34;size&#34; type=&#34;vec2&#34; value=&#34;${amW.toFixed(6)},${amH.toFixed(6)}&#34; /&gt;`]};}}
+  if(hasCubic&amp;&amp;cSegs.length===4&amp;&amp;cmdList.filter(c=&gt;c===&#39;L&#39;||c===&#39;H&#39;||c===&#39;V&#39;).length&gt;=4){const radii=cSegs.map(s=&gt;{const d1=Math.hypot(s.cp1x-s.sx,s.cp1y-s.sy);const d2=Math.hypot(s.cp2x-s.ex,s.cp2y-s.ey);return Math.max(d1,d2)/0.5523;});const avgR=radii.reduce((a,b)=&gt;a+b,0)/radii.length;const allSimilar=radii.every(r=&gt;Math.abs(r-avgR)&lt;avgR*0.2+EPS);if(allSimilar&amp;&amp;avgR&gt;0.5){const rw=W*globalScale,rh=H*globalScale,cr=avgR*globalScale;return{type:&#39;.roundrect&#39;,cx:cxS,cy:cyS,w:rw,h:rh,cornerRadius:cr,props:[`&lt;property name=&#34;size&#34; type=&#34;vec2&#34; value=&#34;${rw.toFixed(6)},${rh.toFixed(6)}&#34; /&gt;`,`&lt;property name=&#34;cornerRadius&#34; type=&#34;float&#34; value=&#34;${cr.toFixed(6)}&#34; /&gt;`]};}}
+  if(hasOnlyLinear){const uniq=pts.filter((p,i,a)=&gt;a.findIndex(q=&gt;Math.abs(q.x-p.x)&lt;EPS&amp;&amp;Math.abs(q.y-p.y)&lt;EPS)===i);if(uniq.length&gt;=5&amp;&amp;uniq.length&lt;=12){const dists=uniq.map(p=&gt;Math.hypot(p.x-cxS,p.y-cyS));const avgD=dists.reduce((a,b)=&gt;a+b,0)/dists.length;const allSameR=dists.every(d=&gt;Math.abs(d-avgD)&lt;avgD*0.05+EPS);if(allSameR){const amR=avgD*globalScale;const angle0=Math.atan2(uniq[0].y-cyS,uniq[0].x-cxS)*180/Math.PI;return{type:&#39;.poly&#39;,cx:cxS,cy:cyS,w:amR*2,h:amR*2,props:[`&lt;property name=&#34;sideCount&#34; type=&#34;float&#34; value=&#34;${uniq.length}.000000&#34; /&gt;`,`&lt;property name=&#34;radius&#34; type=&#34;float&#34; value=&#34;${amR.toFixed(6)}&#34; /&gt;`,`&lt;property name=&#34;offsetAngle&#34; type=&#34;float&#34; value=&#34;${angle0.toFixed(6)}&#34; /&gt;`]};}}}
+  return null;
+}
+
+// ═══════════════════════════════════════════════════
+// isInsideDefs
+// ═══════════════════════════════════════════════════
+function isInsideDefs(el) {
+  let node = el.parentElement;
+  while (node &amp;&amp; node.tagName) {
+    const tag = node.tagName.toLowerCase();
+    if (tag===&#39;defs&#39;||tag===&#39;clippath&#39;||tag===&#39;mask&#39;||tag===&#39;pattern&#39;||tag===&#39;symbol&#39;) return true;
+    if (tag===&#39;svg&#39;) break;
+    node = node.parentElement;
+  }
+  return false;
+}
+
+// ═══════════════════════════════════════════════════
+// PARSE SVG AND RENDER
+// ═══════════════════════════════════════════════════
+function parseSvgAndRender(txt) {
+  const layerList = document.getElementById(&#39;layerList&#39;);
+  if (!txt) { resetUI(); return; }
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(txt, &#39;image/svg+xml&#39;);
+  const svgEl = doc.querySelector(&#39;svg&#39;);
+  if (!svgEl || doc.querySelector(&#39;parsererror&#39;)) {
+    document.getElementById(&#39;svgViewport&#39;).innerHTML = &#39;&lt;div style=&#34;color:#ff4040;font-size:11px;position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:20px;&#34;&gt;⚠ SVG tidak valid&lt;/div&gt;&#39;;
+    return;
+  }
+
+  // Preview
+  const clone = svgEl.cloneNode(true);
+  clone.querySelectorAll(&#39;script&#39;).forEach(s =&gt; s.remove());
+  let vbAttr = svgEl.getAttribute(&#39;viewBox&#39;);
+  if (!vbAttr) {
+    const ew = parseFloat(svgEl.getAttribute(&#39;width&#39;));
+    const eh = parseFloat(svgEl.getAttribute(&#39;height&#39;));
+    if (!isNaN(ew) &amp;&amp; !isNaN(eh)) vbAttr = `0 0 ${ew} ${eh}`;
+  }
+  if (vbAttr) clone.setAttribute(&#39;viewBox&#39;, vbAttr);
+  clone.removeAttribute(&#39;width&#39;); clone.removeAttribute(&#39;height&#39;);
+  clone.setAttribute(&#39;xmlns&#39;,&#39;http://www.w3.org/2000/svg&#39;);
+  clone.setAttribute(&#39;width&#39;,&#39;100%&#39;); clone.setAttribute(&#39;height&#39;,&#39;100%&#39;);
+  clone.setAttribute(&#39;preserveAspectRatio&#39;,&#39;xMidYMid meet&#39;);
+  const vp = document.getElementById(&#39;svgViewport&#39;);
+  vp.innerHTML = &#39;&#39;; vp.appendChild(clone);
+  document.getElementById(&#39;previewPlaceholder&#39;).style.display = &#39;none&#39;;
+  document.getElementById(&#39;pvBar&#39;).style.display = &#39;flex&#39;;
+  document.getElementById(&#39;previewBox&#39;).style.display = &#39;block&#39;;
+  pvFit();
+
+  const vb = (svgEl.getAttribute(&#39;viewBox&#39;)||&#39;&#39;).trim().split(/[\s,]+/);
+  const W = parseFloat(vb[2]) || parseFloat(svgEl.getAttribute(&#39;width&#39;)) || &#39;?&#39;;
+  const H = parseFloat(vb[3]) || parseFloat(svgEl.getAttribute(&#39;height&#39;)) || &#39;?&#39;;
+  document.getElementById(&#39;previewDims&#39;).textContent = `${W} × ${H}`;
+
+  // Detect AI SVG
+  const hasAiMatrix = txt.includes(&#39;matrix(1.3333333&#39;) || txt.includes(&#39;inkscape:groupmode&#39;);
+  const badge = document.getElementById(&#39;svgSourceBadge&#39;);
+  if (hasAiMatrix) badge.innerHTML += `&lt;span class=&#34;info-badge info-ai&#34;&gt;⚡ AI-Export detected&lt;/span&gt;`;
+
+  const classMap = parseSvgStyles(svgEl);
+
+  // Shape → path d converter
+  function shapeToD(el) {
+    const tag = el.tagName.toLowerCase().replace(/.*:/,&#39;&#39;);
+    const n = s =&gt; parseFloat(el.getAttribute(s)) || 0;
+    if (tag===&#39;rect&#39;) {
+      const x=n(&#39;x&#39;),y=n(&#39;y&#39;),w=n(&#39;width&#39;),h=n(&#39;height&#39;);
+      const rx=Math.min(n(&#39;rx&#39;)||n(&#39;ry&#39;)||0,w/2),ry_=Math.min(n(&#39;ry&#39;)||n(&#39;rx&#39;)||0,h/2);
+      if (rx===0&amp;&amp;ry_===0) return `M${x},${y}H${x+w}V${y+h}H${x}Z`;
+      const k=0.5523;
+      return `M${x+rx},${y}H${x+w-rx}C${x+w-rx+rx*k},${y},${x+w},${y+ry_-ry_*k},${x+w},${y+ry_}V${y+h-ry_}C${x+w},${y+h-ry_+ry_*k},${x+w-rx+rx*k},${y+h},${x+w-rx},${y+h}H${x+rx}C${x+rx-rx*k},${y+h},${x},${y+h-ry_+ry_*k},${x},${y+h-ry_}V${y+ry_}C${x},${y+ry_-ry_*k},${x+rx-rx*k},${y},${x+rx},${y}Z`;
+    }
+    if (tag===&#39;circle&#39;) { const cx=n(&#39;cx&#39;),cy=n(&#39;cy&#39;),r=n(&#39;r&#39;); const k=r*0.5523; return `M${cx-r},${cy}C${cx-r},${cy-k},${cx-k},${cy-r},${cx},${cy-r}C${cx+k},${cy-r},${cx+r},${cy-k},${cx+r},${cy}C${cx+r},${cy+k},${cx+k},${cy+r},${cx},${cy+r}C${cx-k},${cy+r},${cx-r},${cy+k},${cx-r},${cy}Z`; }
+    if (tag===&#39;ellipse&#39;) { const cx=n(&#39;cx&#39;),cy=n(&#39;cy&#39;),rx=n(&#39;rx&#39;),ry=n(&#39;ry&#39;); const kx=rx*0.5523,ky=ry*0.5523; return `M${cx-rx},${cy}C${cx-rx},${cy-ky},${cx-kx},${cy-ry},${cx},${cy-ry}C${cx+kx},${cy-ry},${cx+rx},${cy-ky},${cx+rx},${cy}C${cx+rx},${cy+ky},${cx+kx},${cy+ry},${cx},${cy+ry}C${cx-kx},${cy+ry},${cx-rx},${cy+ky},${cx-rx},${cy}Z`; }
+    if (tag===&#39;polygon&#39;) { const pts=(el.getAttribute(&#39;points&#39;)||&#39;&#39;).trim().split(/[\s,]+/).map(Number); if(pts.length&lt;4)return null; let d=`M${pts[0]},${pts[1]}`; for(let i=2;i+1&lt;pts.length;i+=2)d+=`L${pts[i]},${pts[i+1]}`; return d+&#39;Z&#39;; }
+    if (tag===&#39;polyline&#39;) { const pts=(el.getAttribute(&#39;points&#39;)||&#39;&#39;).trim().split(/[\s,]+/).map(Number); if(pts.length&lt;4)return null; let d=`M${pts[0]},${pts[1]}`; for(let i=2;i+1&lt;pts.length;i+=2)d+=`L${pts[i]},${pts[i+1]}`; return d; }
+    if (tag===&#39;line&#39;) { const x1=n(&#39;x1&#39;),y1=n(&#39;y1&#39;),x2=n(&#39;x2&#39;),y2=n(&#39;y2&#39;); return `M${x1},${y1}L${x2},${y2}`; }
+    return null;
+  }
+
+  // Parse all elements
+  parsedPaths = [];
+  const allElements = doc.querySelectorAll(&#39;path,rect,circle,ellipse,polygon,polyline,line&#39;);
+  let pathIndex = 0;
+  allElements.forEach(el =&gt; {
+    if (isInsideDefs(el)) return;
+    const tag = el.tagName.toLowerCase().replace(/.*:/,&#39;&#39;);
+    let d = tag===&#39;path&#39; ? el.getAttribute(&#39;d&#39;) : shapeToD(el);
+    if (!d || d.trim().length &lt; 3) return;
+    const color = getFillColorV7(el, classMap);
+    const svgStroke = getStrokeColor(el);
+    const layerInfo = getLayerInfo(el, pathIndex);
+    const mat = getAccumulatedTransform(el);
+    const hasMat = (mat.a!==1||mat.b!==0||mat.c!==0||mat.d!==1||mat.e!==0||mat.f!==0);
+    parsedPaths.push({ el, d, index: pathIndex, label: layerInfo.fullLabel, layerName: layerInfo.layerName, isFromLayer: layerInfo.isFromLayer, color, svgStroke, mat: hasMat?mat:null, hasMatrix: hasMat });
+    pathIndex++;
+  });
+
+  // Stats
+  const uniqueColors = new Set(parsedPaths.map(p=&gt;p.color?.cssHex||&#39;#000000&#39;));
+  const uniqueLayers = new Set(parsedPaths.map(p=&gt;p.layerName).filter(Boolean));
+  document.getElementById(&#39;statColors&#39;).textContent = uniqueColors.size;
+  document.getElementById(&#39;statLayers&#39;).textContent = uniqueLayers.size;
+
+  // Render layer list
+  layerList.innerHTML = &#39;&#39;;
+  let lastLayer = null;
+  parsedPaths.forEach((p, i) =&gt; {
+    if (p.layerName &amp;&amp; p.layerName !== lastLayer) {
+      lastLayer = p.layerName;
+      const gh = document.createElement(&#39;div&#39;);
+      gh.className = &#39;layer-group-head&#39;;
+      gh.textContent = `▸ ${p.layerName}`;
+      layerList.appendChild(gh);
+    }
+    const cssHex = p.color?.cssHex || &#39;#000000&#39;;
+    let strokeBadge = &#39;&#39;;
+    if (p.svgStroke.isStrokeOnly) {
+      strokeBadge = &#39;&lt;span class=&#34;layer-tag&#34; style=&#34;background:rgba(255,59,59,.18);color:#cc2200;border-color:rgba(255,59,59,.4);&#34; title=&#34;fill:none — stroke only&#34;&gt;S!&lt;/span&gt;&#39;;
+    } else if (p.svgStroke.raw) {
+      strokeBadge = &#39;&lt;span class=&#34;layer-tag&#34; style=&#34;background:rgba(34,202,179,.12);color:#22cab3;border-color:rgba(34,202,179,.3);&#34;&gt;S&lt;/span&gt;&#39;;
+    }
+    const matTag = p.hasMatrix ? &#39;&lt;span class=&#34;layer-tag&#34; style=&#34;background:rgba(249,224,95,.15);color:#8A6C00;border-color:rgba(249,224,95,.4);&#34;&gt;⟲&lt;/span&gt;&#39; : &#39;&#39;;
+    const useShapePrim = document.getElementById(&#39;optShapePrim&#39;).checked;
+    const detShape = useShapePrim ? detectShape(p.d, 1) : null;
+    const shapeTag = detShape ? `&lt;span class=&#34;layer-tag&#34; style=&#34;background:rgba(34,202,179,.15);color:#22cab3;border:1px solid rgba(34,202,179,.3);&#34;&gt;${detShape.type}&lt;/span&gt;` : &#39;&#39;;
+    const mCount = (p.d.match(/[Mm]/g)||[]).length;
+    const compoundTag = mCount&gt;1 ? &#39;&lt;span class=&#34;layer-tag&#34; title=&#34;Compound path&#34; style=&#34;background:rgba(249,224,95,.2);color:#c9a800;&#34;&gt;⊕&lt;/span&gt;&#39; : &#39;&#39;;
+    const div = document.createElement(&#39;div&#39;);
+    div.className = &#39;layer-item&#39;;
+    div.innerHTML = `
+      &lt;input type=&#34;checkbox&#34; id=&#34;chk${i}&#34; checked onchange=&#34;updateStats()&#34;&gt;
+      ${compoundTag}
+      &lt;span class=&#34;layer-swatch&#34; style=&#34;background:${cssHex};${p.svgStroke.isStrokeOnly?&#39;border:2px solid &#39;+cssHex+&#39;;background:transparent;&#39;:&#39;&#39;}&#34;&gt;&lt;/span&gt;
+      &lt;span class=&#34;layer-name&#34; title=&#34;${p.label}&#34;&gt;${p.label}&lt;/span&gt;
+      ${matTag}${shapeTag}${strokeBadge}
+    `;
+    layerList.appendChild(div);
+  });
+
+  // Stroke-only hint
+  const strokeOnlyPaths = parsedPaths.filter(p=&gt;p.svgStroke.isStrokeOnly);
+  const hintBox = document.getElementById(&#39;svgHintBox&#39;);
+  if (strokeOnlyPaths.length &gt; 0) {
+    hintBox.style.display = &#39;block&#39;;
+    hintBox.innerHTML = `⚠️ &lt;strong&gt;${strokeOnlyPaths.length} path&lt;/strong&gt; bertanda &lt;span style=&#34;background:rgba(255,59,59,.18);color:#cc2200;border:1px solid rgba(255,59,59,.4);padding:1px 6px;border-radius:4px;font-size:10px&#34;&gt;S!&lt;/span&gt; punya &lt;code&gt;fill:none&lt;/code&gt; — aktifkan &lt;strong&gt;Tambah Stroke&lt;/strong&gt;.`;
+  } else {
+    hintBox.style.display = &#39;none&#39;;
+  }
+
+  document.getElementById(&#39;layerSection&#39;).style.display = &#39;block&#39;;
+  document.getElementById(&#39;convertBtn&#39;).disabled = false;
+  updateStats();
+}
+
+// ═══════════════════════════════════════════════════
+// BUILD SHAPE XML
+// ═══════════════════════════════════════════════════
+function buildShapeXml(id, label, amPath, fillColor, opts, detectedShape) {
+  const {fillType,blending,opacity,gradStart,gradEnd,gradType,useStroke,strokeSize,strokeJoin,strokeColor,useStrokeColor,startTime,endTime,tcx,tcy,globalScale,vbCx,vbCy} = opts;
+  let amFillType=&#39;color&#39;, gradientXml=&#39;&#39;;
+  if (fillType.startsWith(&#39;gradient&#39;)) {
+    amFillType=&#39;gradient&#39;;
+    const gType=fillType.replace(&#39;gradient-&#39;,&#39;&#39;);
+    const sc=hexToAM(gradStart), ec=hexToAM(gradEnd);
+    gradientXml=`    &lt;gradient type=&#34;${gType}&#34; startColor=&#34;#${sc}&#34; endColor=&#34;#${ec}&#34; start=&#34;0.000000,0.000000&#34; end=&#34;1.000000,1.000000&#34; /&gt;\n`;
+  } else if (fillType===&#39;none&#39;) { amFillType=&#39;none&#39;; }
+  const blendAttr=blending?` blending=&#34;${blending}&#34;`:&#39;&#39;;
+  const opacityXml=(opacity&lt;1)?`      &lt;opacity value=&#34;${parseFloat(opacity).toFixed(6)}&#34; /&gt;\n`:&#39;&#39;;
+  let strokeXml=&#39;&#39;;
+  if (useStroke&amp;&amp;strokeSize&gt;0) {
+    const joinAttr=strokeJoin?` join=&#34;${strokeJoin}&#34;`:&#39;&#39;;
+    const colorXml=useStrokeColor?`      &lt;color value=&#34;#${hexToAM(strokeColor)}&#34; /&gt;\n`:&#39;&#39;;
+    strokeXml=`    &lt;path-stroke direction=&#34;centered&#34;${joinAttr} end-size=&#34;1.500000&#34;&gt;\n${colorXml}      &lt;size value=&#34;${parseFloat(strokeSize).toFixed(6)}&#34; /&gt;\n    &lt;/path-stroke&gt;\n`;
+  }
+  const safeLabel=sanitizeLabel(label);
+  if (detectedShape) {
+    const ds=detectedShape;
+    const shapeLocX=(tcx+(ds.cx-(vbCx||0))*(globalScale||1)).toFixed(6);
+    const shapeLocY=(tcy+(ds.cy-(vbCy||0))*(globalScale||1)).toFixed(6);
+    let xml=`  &lt;shape id=&#34;${id}&#34; label=&#34;${safeLabel}&#34; startTime=&#34;${startTime}&#34; endTime=&#34;${endTime}&#34; fillType=&#34;${amFillType}&#34;${blendAttr} mediaFillMode=&#34;fill&#34; s=&#34;${ds.type}&#34;&gt;\n`;
+    xml+=`    &lt;transform&gt;\n      &lt;location value=&#34;${shapeLocX},${shapeLocY},0.000000&#34; /&gt;\n${opacityXml}    &lt;/transform&gt;\n`;
+    xml+=`    &lt;fillColor value=&#34;#${fillColor}&#34; /&gt;\n`;
+    xml+=gradientXml+strokeXml;
+    xml+=ds.props.map(p=&gt;`    ${p}\n`).join(&#39;&#39;);
+    xml+=`  &lt;/shape&gt;\n`;
+    return xml;
+  }
+  let xml=`  &lt;shape id=&#34;${id}&#34; label=&#34;${safeLabel}&#34; startTime=&#34;${startTime}&#34; endTime=&#34;${endTime}&#34; fillType=&#34;${amFillType}&#34;${blendAttr} mediaFillMode=&#34;fill&#34;&gt;\n`;
+  xml+=`    &lt;transform&gt;\n      &lt;location value=&#34;${tcx.toFixed(6)},${tcy.toFixed(6)},0.000000&#34; /&gt;\n${opacityXml}    &lt;/transform&gt;\n`;
+  xml+=`    &lt;fillColor value=&#34;#${fillColor}&#34; /&gt;\n`;
+  xml+=gradientXml+strokeXml;
+  const subpaths=amPath.match(/[Mm][^Mm]*/g)||[amPath];
+  const cleanSubs=subpaths.map(s=&gt;s.trim()).filter(s=&gt;s.length&gt;1);
+  if (cleanSubs.length&gt;=2) {
+    xml+=`    &lt;path&gt;\n`;
+    cleanSubs.forEach((sub,idx)=&gt;{
+      const sp=sub.endsWith(&#39;Z&#39;)||sub.endsWith(&#39;z&#39;)?sub:sub+&#39; Z&#39;;
+      xml+=idx===0?`      &lt;contour d=&#34;${sp}&#34; /&gt;\n`:`      &lt;contour exclude=&#34;true&#34; d=&#34;${sp}&#34; /&gt;\n`;
+    });
+    xml+=`    &lt;/path&gt;\n`;
+  } else {
+    xml+=`    &lt;path d=&#34;${amPath}&#34; /&gt;\n`;
+  }
+  xml+=`  &lt;/shape&gt;\n`;
+  return xml;
+}
+
+// ═══════════════════════════════════════════════════
+// PROCESS AM — BUILD XML
+// ═══════════════════════════════════════════════════
+function processAM() {
+  if (!parsedPaths.length) { alert(&#39;Upload SVG terlebih dahulu!&#39;); return; }
+  const targetW = parseFloat(document.getElementById(&#39;amWHidden&#39;).value) || 1080;
+  const targetH = parseFloat(document.getElementById(&#39;amHHidden&#39;).value) || 1080;
+  const startTime = parseInt(document.getElementById(&#39;startTime&#39;).value) || 0;
+  const endTime = parseInt(document.getElementById(&#39;endTime&#39;).value) || 2032;
+  const fillType = document.getElementById(&#39;optFillType&#39;).value;
+  const blending = document.getElementById(&#39;optBlend&#39;).value;
+  const opacity = parseFloat(document.getElementById(&#39;optOpacity&#39;).value) || 1;
+  const gradStart = document.getElementById(&#39;gradStart&#39;).value;
+  const gradEnd = document.getElementById(&#39;gradEnd&#39;).value;
+  const useStroke = document.getElementById(&#39;optStroke&#39;).checked;
+  const strokeSize = parseFloat(document.getElementById(&#39;strokeSize&#39;).value) || 5;
+  const strokeJoin = document.getElementById(&#39;strokeJoin&#39;).value;
+  const strokeColor = document.getElementById(&#39;strokeColor&#39;).value;
+  const useStrokeColor = document.getElementById(&#39;strokeUseColor&#39;).checked;
+  const groupMode = document.getElementById(&#39;optGroup&#39;).value;
+
+  const txt = currentSvgText;
+  const doc = new DOMParser().parseFromString(txt, &#39;image/svg+xml&#39;);
+  const svgEl = doc.querySelector(&#39;svg&#39;);
+  const vbParts = (svgEl.getAttribute(&#39;viewBox&#39;)||&#39;&#39;).trim().split(/[\s,]+/).map(parseFloat);
+  const vbX=vbParts[0]||0, vbY=vbParts[1]||0;
+  const vbW=vbParts[2]||parseFloat(svgEl.getAttribute(&#39;width&#39;))||1080;
+  const vbH=vbParts[3]||parseFloat(svgEl.getAttribute(&#39;height&#39;))||1080;
+  const cx=vbX+vbW/2, cy=vbY+vbH/2;
+  const sx=targetW/vbW, sy=targetH/vbH;
+  const globalScale=Math.min(sx,sy);
+  const tcx=targetW/2, tcy=targetH/2;
+  const classMap = parseSvgStyles(svgEl);
+
+  const opts = { fillType, blending, opacity, gradStart, gradEnd, gradType: fillType.startsWith(&#39;gradient&#39;)?fillType.replace(&#39;gradient-&#39;,&#39;&#39;):&#39;linear&#39;,
+                 useStroke, strokeSize, strokeJoin, strokeColor, useStrokeColor,
+                 startTime, endTime, tcx, tcy, globalScale, vbCx:cx, vbCy:cy };
+
+  const sceneAttr = `title=&#34;SVG_AM_Export&#34; width=&#34;${targetW}&#34; height=&#34;${targetH}&#34; exportWidth=&#34;${targetW}&#34; exportHeight=&#34;${targetH}&#34; precompose=&#34;dynamicResolution&#34; bgcolor=&#34;#ff000000&#34; totalTime=&#34;${endTime}&#34; fps=&#34;30&#34; modifiedTime=&#34;0&#34; amver=&#34;1028417&#34; ffver=&#34;106&#34; am=&#34;com.alightcreative.motion/5.0.273.1028417&#34; amplatform=&#34;android&#34;`;
+  const innerSceneAttrs = `width=&#34;${targetW}&#34; height=&#34;${targetH}&#34; exportWidth=&#34;${targetW}&#34; exportHeight=&#34;${targetH}&#34; precompose=&#34;dynamicResolution&#34; bgcolor=&#34;#00000000&#34; totalTime=&#34;${endTime}&#34; fps=&#34;30&#34; modifiedTime=&#34;0&#34; amver=&#34;1028417&#34; ffver=&#34;106&#34; am=&#34;com.alightcreative.motion/5.0.273.1028417&#34; amplatform=&#34;android&#34; retime=&#34;off&#34; retimeAdaptFPS=&#34;false&#34;`;
+
+  const docPaths = Array.from(doc.querySelectorAll(&#39;path,rect,circle,ellipse,polygon,polyline,line&#39;)).filter(el=&gt;!isInsideDefs(el));
+
+  let layerGroups={}, noGroupItems=[], pathCount=0;
+  parsedPaths.forEach((p,i)=&gt;{
+    const chk=document.getElementById(`chk${i}`);
+    if (!chk||!chk.checked) return;
+    const el=docPaths[p.index]; if(!el) return;
+    const d=p.d; if(!d) return;
+    const mat=getAccumulatedTransform(el);
+    const hasMat=(mat.a!==1||mat.b!==0||mat.c!==0||mat.d!==1||mat.e!==0||mat.f!==0);
+    let amPath=transformPath(d,cx,cy,globalScale,hasMat?mat:null);
+    if (!amPath.toUpperCase().includes(&#39;Z&#39;)) amPath+=&#39; Z&#39;;
+    const item={...p,amPath,d,el,mat:hasMat?mat:null};
+    if (groupMode===&#39;embedScene&#39;&amp;&amp;p.layerName) {
+      if(!layerGroups[p.layerName]) layerGroups[p.layerName]=[];
+      layerGroups[p.layerName].push(item);
+    } else { noGroupItems.push(item); }
+    pathCount++;
+  });
+
+  // Auto-center artwork
+  {
+    const allItems=[...noGroupItems,...Object.values(layerGroups).flat()];
+    let gMinX=Infinity,gMaxX=-Infinity,gMinY=Infinity,gMaxY=-Infinity;
+    for(const item of allItems){
+      const segs=item.amPath.match(/[MLCZ][^MLCZ]*/gi)||[];
+      for(const seg of segs){
+        const cmd=seg[0].toUpperCase(); if(cmd===&#39;Z&#39;) continue;
+        const nums=seg.slice(1).trim().split(/[\s,]+/).filter(Boolean).map(Number).filter(n=&gt;isFinite(n));
+        const step=cmd===&#39;C&#39;?6:2, startIdx=cmd===&#39;C&#39;?4:0;
+        for(let i=startIdx;i+1&lt;nums.length;i+=step){const x=nums[i],y=nums[i+1];if(x&lt;gMinX)gMinX=x;if(x&gt;gMaxX)gMaxX=x;if(y&lt;gMinY)gMinY=y;if(y&gt;gMaxY)gMaxY=y;}
+      }
+    }
+    if(isFinite(gMinX)){
+      const artCx=(gMinX+gMaxX)/2,artCy=(gMinY+gMaxY)/2;
+      if(Math.abs(artCx)&gt;1||Math.abs(artCy)&gt;1){
+        const shiftX=-artCx,shiftY=-artCy;
+        const shiftAmPath=amPath=&gt;amPath.replace(/([MLCZ])([^MLCZ]*)/gi,(_,cmd,coords)=&gt;{
+          const u=cmd.toUpperCase(); if(u===&#39;Z&#39;) return &#39;Z&#39;;
+          const nums=coords.trim().split(/[\s,]+/).filter(Boolean).map(Number);
+          const shifted=[];
+          for(let i=0;i+1&lt;nums.length;i+=2){shifted.push((nums[i]+shiftX).toFixed(4),(nums[i+1]+shiftY).toFixed(4));}
+          if(u===&#39;C&#39;){const parts=[];for(let i=0;i+5&lt;shifted.length;i+=6)parts.push(`${shifted[i]} ${shifted[i+1]}, ${shifted[i+2]} ${shifted[i+3]}, ${shifted[i+4]} ${shifted[i+5]}`);return `C ${parts.join(&#39;, &#39;)}`;}
+          return `${u} ${shifted.join(&#39; &#39;)}`;
+        });
+        for(const item of noGroupItems) item.amPath=shiftAmPath(item.amPath);
+        for(const items of Object.values(layerGroups)) for(const item of items) item.amPath=shiftAmPath(item.amPath);
+      }
+    }
+  }
+
+  let shapesXml=&#39;&#39;, idCounter=2000, totalShapes=0;
+  const makeShape=item=&gt;{
+    let fillColor=&#39;ff000000&#39;;
+    if(fillType===&#39;color&#39;){
+      const freshColor=getFillColorV7(item.el,classMap);
+      fillColor=freshColor?freshColor.amColor:&#39;ff000000&#39;;
+    }
+    let shapeOpts={...opts};
+    if(item.svgStroke.isStrokeOnly&amp;&amp;item.svgStroke.raw){
+      shapeOpts.useStroke=true;shapeOpts.strokeSize=Math.max(1,(item.svgStroke.width||1)*globalScale);
+      shapeOpts.strokeColor=item.svgStroke.raw;shapeOpts.useStrokeColor=true;
+      shapeOpts.fillType=&#39;none&#39;;fillColor=&#39;00000000&#39;;
+    } else if(!useStroke&amp;&amp;item.svgStroke.raw){
+      shapeOpts.useStroke=true;shapeOpts.strokeSize=Math.max(1,(item.svgStroke.width||1)*globalScale*0.5);
+      shapeOpts.strokeColor=item.svgStroke.raw;shapeOpts.useStrokeColor=true;
+    }
+    totalShapes++;
+    const useShapePrim=document.getElementById(&#39;optShapePrim&#39;).checked;
+    const detected=useShapePrim?detectShape(item.d,globalScale):null;
+    return buildShapeXml(idCounter++,item.label,item.amPath,fillColor,shapeOpts,detected);
+  };
+
+  // embedScene groups
+  Object.entries(layerGroups).forEach(([gLabel,items])=&gt;{
+    const groupId=idCounter++;
+    const safeLabel=sanitizeLabel(gLabel);
+    const innerShapes=items.map(makeShape).join(&#39;&#39;);
+    const indented=innerShapes.replace(/^/gm,&#39;      &#39;).trimEnd();
+    shapesXml+=`  &lt;embedScene id=&#34;${groupId}&#34; label=&#34;${safeLabel}&#34; startTime=&#34;${startTime}&#34; endTime=&#34;${endTime}&#34; fillType=&#34;intrinsic&#34; mediaFillMode=&#34;fill&#34;&gt;\n`;
+    shapesXml+=`    &lt;transform&gt;\n      &lt;location value=&#34;${tcx.toFixed(6)},${tcy.toFixed(6)},0.000000&#34; /&gt;\n    &lt;/transform&gt;\n`;
+    shapesXml+=`    &lt;fillColor value=&#34;#ff000000&#34; /&gt;\n`;
+    shapesXml+=`    &lt;scene title=&#34;&#34; ${innerSceneAttrs}&gt;\n`;
+    shapesXml+=indented+&#39;\n&#39;;
+    shapesXml+=`    &lt;/scene&gt;\n  &lt;/embedScene&gt;\n`;
+  });
+  noGroupItems.forEach(item=&gt;{ shapesXml+=makeShape(item); });
+
+  // Tagmark
+  const now=new Date();
+  const pad=n=&gt;String(n).padStart(2,&#39;0&#39;);
+  const exportedStr=`${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+  const tagmark=`&lt;!--\n  Created sanz, inspired by Lizier Tools Exported: ${exportedStr}\n--&gt;\n`;
+
+  const xml=`&lt;?xml version=&#39;1.0&#39; encoding=&#39;UTF-8&#39; ?&gt;\n${tagmark}&lt;scene ${sceneAttr} retime=&#34;freeze&#34; retimeAdaptFPS=&#34;false&#34;&gt;\n${shapesXml}&lt;/scene&gt;`;
+
+  const groupCount=Object.keys(layerGroups).length;
+  const strokeOnlyCount=parsedPaths.filter(p=&gt;p.svgStroke.isStrokeOnly).length;
+  const strokeWarning=strokeOnlyCount&gt;0?` · ⚠ ${strokeOnlyCount} stroke-only`:&#39;&#39;;
+  document.getElementById(&#39;statusText&#39;).textContent=`✅ ${totalShapes} shape · ${groupCount} layer group · siap import${strokeWarning}`;
+  document.getElementById(&#39;outputXml&#39;).textContent=xml;
+  document.getElementById(&#39;outputSection&#39;).style.display=&#39;block&#39;;
+  setTimeout(()=&gt;document.getElementById(&#39;outputSection&#39;).scrollIntoView({behavior:&#39;smooth&#39;,block:&#39;start&#39;}),150);
+}
+
+// ═══════════════════════════════════════════════════
+// UI HELPERS
+// ═══════════════════════════════════════════════════
+function updateStats() {
+  const total=parsedPaths.length;
+  const selected=parsedPaths.filter((_,i)=&gt;{const c=document.getElementById(`chk${i}`);return c?c.checked:true;}).length;
+  const uniqueLayers=new Set(parsedPaths.map(p=&gt;p.layerName).filter(Boolean));
+  const uniqueColors=new Set(parsedPaths.filter((_,i)=&gt;{const c=document.getElementById(`chk${i}`);return c?c.checked:true;}).map(p=&gt;p.color?.cssHex||&#39;#000000&#39;));
+  document.getElementById(&#39;statPaths&#39;).textContent=total;
+  document.getElementById(&#39;statLayers&#39;).textContent=uniqueLayers.size;
+  document.getElementById(&#39;statColors&#39;).textContent=uniqueColors.size;
+  document.getElementById(&#39;statSelected&#39;).textContent=selected;
+}
+
+function selectAll(val) {
+  parsedPaths.forEach((_,i)=&gt;{const c=document.getElementById(`chk${i}`);if(c) c.checked=val;});
+  updateStats();
+}
+
+function toggleFillOpts() {
+  const v=document.getElementById(&#39;optFillType&#39;).value;
+  document.getElementById(&#39;gradientOpts&#39;).style.display=v.startsWith(&#39;gradient&#39;)?&#39;block&#39;:&#39;none&#39;;
+}
+
+function toggleStrokeOpts() {
+  document.getElementById(&#39;strokeOpts&#39;).style.display=document.getElementById(&#39;optStroke&#39;).checked?&#39;block&#39;:&#39;none&#39;;
+}
+
+function resetUI() {
+  document.getElementById(&#39;svgViewport&#39;).innerHTML=&#39;&#39;;
+  document.getElementById(&#39;previewPlaceholder&#39;).style.display=&#39;flex&#39;;
+  document.getElementById(&#39;pvBar&#39;).style.display=&#39;none&#39;;
+  document.getElementById(&#39;previewDims&#39;).textContent=&#39;&#39;;
+  document.getElementById(&#39;layerList&#39;).innerHTML=&#39;&lt;div style=&#34;color:var(--muted);font-size:10px;text-align:center;padding:14px 0;&#34;&gt;Layer muncul setelah SVG diinput&lt;/div&gt;&#39;;
+  parsedPaths=[];
+  updateStats();
+}
+
+function startConvert() {
+  const btn=document.getElementById(&#39;convertBtn&#39;);
+  btn.classList.add(&#39;loading&#39;);
+  btn.textContent=&#39;⏳ Converting...&#39;;
+  btn.disabled=true;
+  requestAnimationFrame(()=&gt;{
+    setTimeout(()=&gt;{
+      try { processAM(); } catch(e) { console.error(e); alert(&#39;Error: &#39;+e.message); }
+      btn.classList.remove(&#39;loading&#39;);
+      btn.textContent=&#39;⚡ CONVERT TO XML&#39;;
+      btn.disabled=false;
+    },30);
+  });
+}
+
+function copyResult() {
+  const t=document.getElementById(&#39;outputXml&#39;).textContent;
+  navigator.clipboard.writeText(t).then(()=&gt;toast(&#39;✅ XML berhasil dicopy!&#39;)).catch(()=&gt;{
+    const ta=document.createElement(&#39;textarea&#39;);ta.value=t;ta.style.position=&#39;fixed&#39;;
+    document.body.appendChild(ta);ta.select();document.execCommand(&#39;copy&#39;);
+    document.body.removeChild(ta);toast(&#39;✅ Berhasil dicopy!&#39;);
+  });
+}
+
+function downloadXml() {
+  const t=document.getElementById(&#39;outputXml&#39;).textContent; if(!t) return;
+  const base=svgFileName?svgFileName:&#39;svgToAM&#39;;
+  const fname=`${base}_${String(xmlCounter).padStart(3,&#39;0&#39;)}.xml`;
+  xmlCounter++;
+  const a=document.createElement(&#39;a&#39;);
+  a.href=URL.createObjectURL(new Blob([t],{type:&#39;text/xml&#39;}));
+  a.download=fname;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+}
+
+// ═══════════════════════════════════════════════════
+// PREVIEW PAN &amp; ZOOM
+// ═══════════════════════════════════════════════════
+function pvApply() {
+  const vp=document.getElementById(&#39;svgViewport&#39;);
+  vp.style.transform=`translate(${pvState.tx}px,${pvState.ty}px) scale(${pvState.scale})`;
+  const pct=pvState.scale===1?&#39;fit&#39;:Math.round(pvState.scale*100)+&#39;%&#39;;
+  document.getElementById(&#39;pvLabel&#39;).textContent=pct;
+}
+
+function pvZoom(delta,cx,cy) {
+  const area=document.getElementById(&#39;previewArea&#39;);
+  const rect=area.getBoundingClientRect();
+  const aCx=rect.width/2,aCy=rect.height/2;
+  cx=cx!==undefined?cx-aCx:0; cy=cy!==undefined?cy-aCy:0;
+  const oldScale=pvState.scale;
+  const newScale=Math.max(0.05,Math.min(30,oldScale*(1+delta)));
+  pvState.tx=cx-(cx-pvState.tx)*(newScale/oldScale);
+  pvState.ty=cy-(cy-pvState.ty)*(newScale/oldScale);
+  pvState.scale=newScale; pvApply();
+}
+
+function pvFit() {
+  pvState.scale=1; pvState.tx=0; pvState.ty=0; pvApply();
+  document.getElementById(&#39;pvLabel&#39;).textContent=&#39;fit&#39;;
+}
+
+(function(){
+  const area=document.getElementById(&#39;previewArea&#39;);
+  area.addEventListener(&#39;wheel&#39;,e=&gt;{
+    e.preventDefault();
+    const rect=area.getBoundingClientRect();
+    pvZoom(e.deltaY&lt;0?.15:-.15,e.clientX-rect.left,e.clientY-rect.top);
+  },{passive:false});
+  area.addEventListener(&#39;mousedown&#39;,e=&gt;{
+    if(e.button!==0) return;
+    pvDrag={startX:e.clientX,startY:e.clientY,startTx:pvState.tx,startTy:pvState.ty};
+    area.classList.add(&#39;dragging&#39;);
+  });
+  window.addEventListener(&#39;mousemove&#39;,e=&gt;{
+    if(!pvDrag) return;
+    pvState.tx=pvDrag.startTx+(e.clientX-pvDrag.startX);
+    pvState.ty=pvDrag.startTy+(e.clientY-pvDrag.startY); pvApply();
+  });
+  window.addEventListener(&#39;mouseup&#39;,()=&gt;{pvDrag=null;document.getElementById(&#39;previewArea&#39;).classList.remove(&#39;dragging&#39;);});
+  let lastT=null;
+  area.addEventListener(&#39;touchstart&#39;,e=&gt;{lastT=e.touches;},{passive:true});
+  area.addEventListener(&#39;touchmove&#39;,e=&gt;{
+    e.preventDefault();
+    if(e.touches.length===1&amp;&amp;lastT){pvState.tx+=e.touches[0].clientX-lastT[0].clientX;pvState.ty+=e.touches[0].clientY-lastT[0].clientY;pvApply();}
+    else if(e.touches.length===2&amp;&amp;lastT&amp;&amp;lastT.length===2){
+      const rect=area.getBoundingClientRect();
+      const pd=Math.hypot(lastT[0].clientX-lastT[1].clientX,lastT[0].clientY-lastT[1].clientY);
+      const nd=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+      if(pd===0){lastT=e.touches;return;}
+      const cx=(e.touches[0].clientX+e.touches[1].clientX)/2-rect.left;
+      const cy=(e.touches[0].clientY+e.touches[1].clientY)/2-rect.top;
+      pvZoom((nd/pd-1)*0.7,cx,cy);
+    }
+    lastT=e.touches;
+  },{passive:false});
+  area.addEventListener(&#39;touchend&#39;,()=&gt;{lastT=null;});
+})();
+
+// ═══════════════════════════════════════════════════
+// FILE UPLOAD EVENTS
+// ═══════════════════════════════════════════════════
+document.getElementById(&#39;dropzone&#39;).onclick = () =&gt; document.getElementById(&#39;fileInput&#39;).click();
+
+document.getElementById(&#39;fileInput&#39;).addEventListener(&#39;change&#39;, e =&gt; {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev =&gt; {
+    currentSvgText = ev.target.result;
+    svgFileName = file.name.replace(/\.svg$/i,&#39;&#39;).replace(/[^a-zA-Z0-9_\-]/g,&#39;_&#39;);
+    document.getElementById(&#39;svgSourceBadge&#39;).innerHTML = `&lt;span class=&#34;info-badge info-ok&#34;&gt;📄 ${file.name}&lt;/span&gt;`;
+    parseSvgAndRender(currentSvgText);
+  };
+  reader.readAsText(file);
+});
+
+document.addEventListener(&#39;dragover&#39;, e =&gt; e.preventDefault());
+document.addEventListener(&#39;drop&#39;, e =&gt; {
+  e.preventDefault();
+  const file = e.dataTransfer.files[0];
+  if (!file || !file.name.endsWith(&#39;.svg&#39;)) return;
+  const reader = new FileReader();
+  reader.onload = ev =&gt; {
+    currentSvgText = ev.target.result;
+    svgFileName = file.name.replace(/\.svg$/i,&#39;&#39;).replace(/[^a-zA-Z0-9_\-]/g,&#39;_&#39;);
+    document.getElementById(&#39;svgSourceBadge&#39;).innerHTML = `&lt;span class=&#34;info-badge info-ok&#34;&gt;📄 ${file.name}&lt;/span&gt;`;
+    parseSvgAndRender(currentSvgText);
+  };
+  reader.readAsText(file);
+});
+    </script>
+  </body>
+</html>
