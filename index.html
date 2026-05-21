@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SVG to Alight Motion XML Converter</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #0f0f13;
+            color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background-color: #1a1a24;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            width: 400px;
+            text-align: center;
+            border: 1px solid #2a2a3a;
+        }
+        h2 { margin-top: 0; color: #ff4a4a; }
+        p { color: #8a8a9a; font-size: 14px; }
+        .drop-zone {
+            border: 2px dashed #ff4a4a;
+            padding: 40px 20px;
+            border-radius: 12px;
+            background-color: #222230;
+            cursor: pointer;
+            transition: 0.3s;
+            margin: 20px 0;
+        }
+        .drop-zone:hover { background-color: #2a2a3c; }
+        .file-input { display: none; }
+        button {
+            background-color: #ff4a4a;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+            display: none;
+        }
+        button:hover { background-color: #e03e3e; }
+        #status { margin-top: 15px; color: #4aff4a; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>SVG to Alight Motion</h2>
+    <p>Upload file SVG Anda untuk diubah menjadi XML Preset Alight Motion secara instan.</p>
+    
+    <div class="drop-zone" id="dropZone">
+        <span id="dropZoneText">Klik atau Tarik File SVG ke Sini</span>
+        <input type="file" id="fileInput" class="file-input" accept=".svg">
+    </div>
+
+    <button id="convertBtn">Unduh XML Alight Motion</button>
+    <div id="status"></div>
+</div>
+
+<script>
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const convertBtn = document.getElementById('convertBtn');
+    const status = document.getElementById('status');
+    const dropZoneText = document.getElementById('dropZoneText');
+    
+    let loadedSvgContent = "";
+    let loadedFileName = "Preset_Vektor";
+
+    // Efek Drag & Drop
+    dropZone.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', handleFileSelect);
+    
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.style.borderColor = '#ffffff'; });
+    dropZone.addEventListener('dragleave', () => { dropZone.style.borderColor = '#ff4a4a'; });
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.style.borderColor = '#ff4a4a';
+        if (e.dataTransfer.files.length > 0) {
+            fileInput.files = e.dataTransfer.files;
+            handleFileSelect();
+        }
+    });
+
+    function handleFileSelect() {
+        const file = fileInput.files[0];
+        if (file && file.name.endsWith('.svg')) {
+            loadedFileName = file.name.replace('.svg', '');
+            dropZoneText.innerText = file.name;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                loadedSvgContent = e.target.result;
+                convertBtn.style.display = 'block';
+                status.innerText = "File SVG siap dikonversi!";
+            };
+            reader.readAsText(file);
+        } else {
+            status.innerText = "Mohon masukkan file berformat .svg!";
+            status.style.color = '#ff4a4a';
+        }
+    }
+
+    convertBtn.addEventListener('click', () => {
+        if (!loadedSvgContent) return;
+
+        // Proses ekstraksi path d="..."
+        const pathRegex = /d="([^"]+)"/g;
+        let matches;
+        let shapeLayers = "";
+        let idCounter = 2000;
+
+        // Ambil warna fill asli dari SVG jika ada
+        const fillRegex = /fill="([^"]+)"/;
+        let fillMatch = loadedSvgContent.match(fillRegex);
+        let hexColor = fillMatch ? fillMatch[1].replace("#", "") : "d00f0f";
+        if (hexColor.length === 6) hexColor = "ff" + hexColor; // Tambah Opacity ARGB
+
+        while ((matches = pathRegex.exec(loadedSvgContent)) !== null) {
+            const pathData = matches[1];
+            shapeLayers += `  <shape id="${idCounter}" label="Shape_${String(idCounter - 1999).padStart(3, '0')}" startTime="0" endTime="2032" fillType="color" mediaFillMode="fill">
+    <transform>
+      <location value="540.000000,540.000000,0.000000" />
+    </transform>
+    <fillColor value="#${hexColor}" />
+    <path d="${pathData}" />
+  </shape>\n`;
+            idCounter++;
+        }
+
+        // Struktur XML Alight Motion
+        const amXml = `<?xml version='1.0' encoding='UTF-8' ?>
+<!-- Created via Resplace Auto Converter -->
+<scene title="${loadedFileName}" width="1080" height="1080" exportWidth="1080" exportHeight="1080" precompose="dynamicResolution" bgcolor="#ff000000" totalTime="2032" fps="30" modifiedTime="0" amver="1028417" ffver="106" am="com.alightcreative.motion/5.0.273.1028417" amplatform="android" retime="freeze" retimeAdaptFPS="false">
+${shapeLayers}</scene>`;
+
+        // Proses Unduh Otomatis
+        const blob = new Blob([amXml], { type: "text/xml" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${loadedFileName}_AM.xml`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        status.innerText = "Konversi Berhasil! File XML telah diunduh.";
+        status.style.color = '#4aff4a';
+    });
+</script>
+</body>
+</html>
