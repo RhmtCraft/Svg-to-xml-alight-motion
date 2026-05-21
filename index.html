@@ -3,64 +3,268 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SVG to AM XML - Resplace</title>
+    <title>SVG to AM | Resplace Studio</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=JetBrains+Mono&display=swap" rel="stylesheet">
     <style>
-        body { font-family: sans-serif; background: #0f0f13; color: #fff; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .box { background: #1a1a24; padding: 30px; border-radius: 15px; text-align: center; width: 350px; border: 1px solid #2a2a3a; }
-        .drop-zone { border: 2px dashed #ff4a4a; padding: 30px; margin: 20px 0; cursor: pointer; border-radius: 10px; }
-        button { background: #ff4a4a; color: #fff; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; width: 100%; display: none; }
-        #status { margin-top: 10px; font-size: 13px; color: #888; }
+        :root {
+            --bg: #050508;
+            --surface: #0f0f17;
+            --accent: #38bdf8;
+            --accent-glow: rgba(56, 189, 248, 0.3);
+            --border: rgba(255, 255, 255, 0.08);
+            --text: #f8fafc;
+            --muted: #94a3b8;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 1000px;
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 850px) {
+            .app-container { grid-template-columns: 1fr; }
+        }
+
+        /* Sidebar & Settings */
+        .sidebar {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            height: fit-content;
+        }
+
+        .brand h1 { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; }
+        .brand span { color: var(--accent); }
+
+        .dropzone {
+            border: 2px dashed var(--border);
+            border-radius: 16px;
+            padding: 30px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.3s;
+            background: rgba(255,255,255,0.02);
+        }
+        .dropzone:hover { border-color: var(--accent); background: var(--accent-glow); }
+        .dropzone p { font-size: 14px; color: var(--muted); margin-top: 10px; }
+
+        .config-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .input-group { display: flex; flex-direction: column; gap: 6px; }
+        .input-group label { font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--muted); letter-spacing: 0.5px; }
+        
+        input, select {
+            background: rgba(0,0,0,0.2);
+            border: 1px solid var(--border);
+            padding: 10px 14px;
+            border-radius: 10px;
+            color: #fff;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            width: 100%;
+        }
+
+        .btn-convert {
+            background: var(--accent);
+            color: #000;
+            border: none;
+            padding: 16px;
+            border-radius: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 10px;
+            font-size: 15px;
+        }
+        .btn-convert:hover { transform: translateY(-2px); box-shadow: 0 8px 20px var(--accent-glow); }
+
+        /* Preview Area */
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .preview-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 20px;
+            flex: 1;
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .canvas-area {
+            background: #000;
+            border-radius: 16px;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            background-image: radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        #svgPreview svg { max-width: 90%; max-height: 90%; filter: drop-shadow(0 0 10px rgba(0,0,0,0.5)); }
+
+        .badge {
+            background: var(--accent-glow);
+            color: var(--accent);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
     </style>
 </head>
 <body>
 
-<div class="box">
-    <h3>SVG to Alight Motion</h3>
-    <div class="drop-zone" id="dropZone">Klik / Upload SVG</div>
-    <input type="file" id="fileInput" style="display:none" accept=".svg">
-    <button id="btn">DOWNLOAD XML</button>
-    <div id="status"></div>
+<div class="app-container">
+    <aside class="sidebar">
+        <div class="brand">
+            <h1>SVG<span>.AM</span> Converter</h1>
+        </div>
+
+        <div class="dropzone" id="dropZone">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent)"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <p id="fileNameDisplay">Tarik file SVG ke sini</p>
+            <input type="file" id="fileInput" hidden accept=".svg">
+        </div>
+
+        <div class="config-grid">
+            <div class="input-group">
+                <label>Canvas Width</label>
+                <input type="number" id="amWidth" value="1080">
+            </div>
+            <div class="input-group">
+                <label>Canvas Height</label>
+                <input type="number" id="amHeight" value="1080">
+            </div>
+            <div class="input-group">
+                <label>Duration (ms)</label>
+                <input type="number" id="amDuration" value="2000">
+            </div>
+            <div class="input-group">
+                <label>Start ID</label>
+                <input type="number" id="startId" value="2000">
+            </div>
+        </div>
+
+        <button class="btn-convert" id="btnConvert">Generate XML</button>
+        <p id="statusMsg" style="text-align: center; font-size: 12px; color: var(--muted)"></p>
+    </aside>
+
+    <main class="main-content">
+        <div class="preview-card">
+            <div class="preview-header">
+                <h2 style="font-size: 16px;">Vektor Preview</h2>
+                <div id="layerCount" class="badge">0 Layers</div>
+            </div>
+            <div class="canvas-area" id="svgPreview">
+                <p style="color: var(--muted); font-size: 14px;">Belum ada file dipilih</p>
+            </div>
+        </div>
+    </main>
 </div>
 
 <script>
+    // Logika Inti yang Sudah Dioptimasi
     const dropZone = document.getElementById('dropZone');
     const fileInput = document.getElementById('fileInput');
-    const btn = document.getElementById('btn');
-    const status = document.getElementById('status');
-    let svgData = "";
-    let fname = "Preset";
+    const btnConvert = document.getElementById('btnConvert');
+    const svgPreview = document.getElementById('svgPreview');
+    const fileNameDisplay = document.getElementById('fileNameDisplay');
+    const layerCount = document.getElementById('layerCount');
+    const statusMsg = document.getElementById('statusMsg');
+
+    let svgRawContent = "";
+    let currentFileName = "Project_AM";
 
     dropZone.onclick = () => fileInput.click();
+
     fileInput.onchange = (e) => {
         const file = e.target.files[0];
-        if(file) {
-            fname = file.name.replace('.svg', '');
+        if (file && file.name.endsWith('.svg')) {
+            currentFileName = file.name.replace('.svg', '');
+            fileNameDisplay.innerText = file.name;
             const reader = new FileReader();
-            reader.onload = (res) => {
-                svgData = res.target.result;
-                btn.style.display = 'block';
-                status.innerText = "File Siap!";
+            reader.onload = (event) => {
+                svgRawContent = event.target.result;
+                svgPreview.innerHTML = svgRawContent;
+                
+                // Hitung layer (path)
+                const paths = svgRawContent.match(/<path/g);
+                layerCount.innerText = (paths ? paths.length : 0) + " Layers";
+                statusMsg.innerText = "File siap dikonversi!";
             };
             reader.readAsText(file);
         }
     };
 
-    btn.onclick = () => {
-        const pathMatch = [...svgData.matchAll(/d="([^"]+)"/g)];
-        let shapes = "";
-        pathMatch.forEach((m, i) => {
-            shapes += `<shape id="${2000+i}" label="Layer_${i}" startTime="0" endTime="2000" fillType="color"><transform><location value="540,540,0"/></transform><fillColor value="#ffff4a4a"/><path d="${m[1]}"/></shape>`;
+    btnConvert.onclick = () => {
+        if (!svgRawContent) return alert("Pilih file SVG dulu!");
+
+        const width = document.getElementById('amWidth').value;
+        const height = document.getElementById('amHeight').value;
+        const duration = document.getElementById('amDuration').value;
+        const startId = parseInt(document.getElementById('startId').value);
+
+        // Parsing Path Data
+        const pathDataMatches = [...svgRawContent.matchAll(/d="([^"]+)"/g)];
+        let shapesXml = "";
+
+        pathDataMatches.forEach((match, index) => {
+            const d = match[1];
+            shapesXml += `  <shape id="${startId + index}" label="Layer_${index + 1}" startTime="0" endTime="${duration}" fillType="color" mediaFillMode="fill">
+    <transform><location value="${width/2},${height/2},0.000000"/></transform>
+    <fillColor value="#ffffffff"/>
+    <path d="${d}"/>
+  </shape>\n`;
         });
 
-        const xml = `<?xml version='1.0' encoding='UTF-8' ?><scene title="${fname}" width="1080" height="1080" exportWidth="1080" exportHeight="1080" amver="1028417" ffver="106" am="com.alightcreative.motion/5.0" amplatform="android">${shapes}</scene>`;
-        
-        const blob = new Blob([xml.trim()], {type: 'text/xml'});
+        const finalXml = `<?xml version='1.0' encoding='UTF-8' ?>
+<scene title="${currentFileName}" width="${width}" height="${height}" exportWidth="${width}" exportHeight="${height}" amver="1028417" ffver="106" am="com.alightcreative.motion/5.0" amplatform="android">
+${shapesXml}</scene>`;
+
+        const blob = new Blob([finalXml.trim()], { type: 'text/xml' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = fname + ".xml";
+        a.download = `${currentFileName}_Resplace.xml`;
         a.click();
-        status.innerText = "Berhasil diunduh!";
+        
+        statusMsg.innerText = "Berhasil diunduh! Cek folder Download.";
+        statusMsg.style.color = "var(--accent)";
     };
 </script>
 </body>
