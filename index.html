@@ -198,7 +198,6 @@
 </div>
 
 <script>
-    // Logika Inti yang Sudah Dioptimasi
     const dropZone = document.getElementById('dropZone');
     const fileInput = document.getElementById('fileInput');
     const btnConvert = document.getElementById('btnConvert');
@@ -214,18 +213,16 @@
 
     fileInput.onchange = (e) => {
         const file = e.target.files[0];
-        if (file && file.name.endsWith('.svg')) {
+        if (file) {
             currentFileName = file.name.replace('.svg', '');
             fileNameDisplay.innerText = file.name;
             const reader = new FileReader();
             reader.onload = (event) => {
                 svgRawContent = event.target.result;
                 svgPreview.innerHTML = svgRawContent;
-                
-                // Hitung layer (path)
-                const paths = svgRawContent.match(/<path/g);
-                layerCount.innerText = (paths ? paths.length : 0) + " Layers";
-                statusMsg.innerText = "File siap dikonversi!";
+                const paths = [...svgRawContent.matchAll(/<path[^>]*d="([^"]+)"/g)];
+                layerCount.innerText = paths.length + " Layers";
+                statusMsg.innerText = "File terdeteksi!";
             };
             reader.readAsText(file);
         }
@@ -234,38 +231,47 @@
     btnConvert.onclick = () => {
         if (!svgRawContent) return alert("Pilih file SVG dulu!");
 
-        const width = document.getElementById('amWidth').value;
-        const height = document.getElementById('amHeight').value;
+        const width = parseFloat(document.getElementById('amWidth').value);
+        const height = parseFloat(document.getElementById('amHeight').value);
         const duration = document.getElementById('amDuration').value;
         const startId = parseInt(document.getElementById('startId').value);
 
-        // Parsing Path Data
-        const pathDataMatches = [...svgRawContent.matchAll(/d="([^"]+)"/g)];
+        // Membersihkan dan mengambil Path Data yang VALID saja
+        const pathMatches = [...svgRawContent.matchAll(/<path[^>]*d="([\s\S]*?)"/g)];
         let shapesXml = "";
+        let validLayerIndex = 1;
 
-        pathDataMatches.forEach((match, index) => {
-            const d = match[1];
-            shapesXml += `  <shape id="${startId + index}" label="Layer_${index + 1}" startTime="0" endTime="${duration}" fillType="color" mediaFillMode="fill">
-    <transform><location value="${width/2},${height/2},0.000000"/></transform>
-    <fillColor value="#ffffffff"/>
-    <path d="${d}"/>
+        pathMatches.forEach((match) => {
+            let d = match[1].replace(/\r?\n|\r/g, " ").trim();
+            
+            // VALIDASI: Hanya proses jika diawali dengan M, m, atau L (kode path asli)
+            if (/^[MmLl]/.test(d)) {
+                shapesXml += `  <shape id="${startId + validLayerIndex}" label="Shape_${String(validLayerIndex).padStart(3, '0')}" startTime="0" endTime="${duration}" fillType="color" mediaFillMode="fill">
+    <transform>
+      <location value="${width/2}.000000,${height/2}.000000,0.000000" />
+    </transform>
+    <fillColor value="#ffffffff" />
+    <path d="${d}" />
   </shape>\n`;
+                validLayerIndex++;
+            }
         });
 
         const finalXml = `<?xml version='1.0' encoding='UTF-8' ?>
-<scene title="${currentFileName}" width="${width}" height="${height}" exportWidth="${width}" exportHeight="${height}" amver="1028417" ffver="106" am="com.alightcreative.motion/5.0" amplatform="android">
+<scene title="${currentFileName}" width="${width}" height="${height}" exportWidth="${width}" exportHeight="${height}" precompose="dynamicResolution" bgcolor="#ff000000" totalTime="${duration}" fps="30" amver="1028417" ffver="106" am="com.alightcreative.motion/5.0" amplatform="android">
 ${shapesXml}</scene>`;
 
         const blob = new Blob([finalXml.trim()], { type: 'text/xml' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `${currentFileName}_Resplace.xml`;
+        a.download = `${currentFileName}_AM.xml`;
         a.click();
         
-        statusMsg.innerText = "Berhasil diunduh! Cek folder Download.";
-        statusMsg.style.color = "var(--accent)";
+        statusMsg.innerText = "Sukses! XML siap di-import.";
+        statusMsg.style.color = "#34d399";
     };
 </script>
+    
 </body>
 </html>
